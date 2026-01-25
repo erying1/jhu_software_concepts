@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %} My Projects{% endblock title %}</h1>
+
+{% endblock header %}
+
+{% block content %}
+  <ul class="projects-list">
+    <li>
+      <div class="project-title">Module 1: Personal Website</div>
+      <div class="project-description">
+        A Flask-based personal website demonstrating blueprint architecture, template inheritance, and responsive design. Built using Python, Flask, HTML, and CSS.
+	<strong>GitHub Link:</strong> <a href="https://github.com/erying1/jhu_software_concepts.git">jhu_software_concepts</a>     
+      </div>
+    </li>
+  </ul>
+{% endblock content %}
