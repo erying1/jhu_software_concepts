@@ -3,4 +3,3 @@ backup/
 *.zip
 *.gguf
 status.txt
-llm_extend_applicant_data.json
