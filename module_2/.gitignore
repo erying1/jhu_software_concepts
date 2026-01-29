@@ -1,0 +1,6 @@
+module_2/llm_hosting/models/
+backup/
+*.zip
+*.gguf
+status.txt
+llm_extend_applicant_data.json

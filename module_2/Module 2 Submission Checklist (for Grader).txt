@@ -1,0 +1,102 @@
+Module 2 Submission Checklist (Grader‑Friendly)
+✔ GitHub Repository
+[ ] SSH URL submitted (e.g., git@github.com:erying1/jhu_software_concepts.git)
+
+[ ] Repository is private
+
+[ ] All required files are inside the module_2/ directory
+
+✔ Required Files in module_2/
+Core Python Scripts
+[ ] scrape.py
+
+[ ] clean.py
+
+LLM Folder (unchanged from Liv’s ZIP)
+[ ] llm_hosting/ folder included
+
+[ ] app.py
+
+[ ] canon_programs.txt
+
+[ ] canon_universities.txt
+
+[ ] all other provided files intact
+
+Data Outputs
+[ ] raw_applicant_data.json (optional but recommended)
+
+[ ] cleaned_data.json (basic cleaning only — optional but good)
+
+[ ] applicant_data.json
+
+This is the LLM output produced by running llm_hosting/app.py
+
+[ ] llm_extend_applicant_data.json
+
+This is your final cleaned dataset (basic cleaning + LLM fields merged)
+
+Documentation
+[ ] robots.txt screenshot included
+
+[ ] README.txt included and updated
+
+Overview
+
+Approach
+
+Pipeline diagram
+
+Known issues
+
+Submission checklist
+
+✔ Functional Requirements
+
+Scraping
+[ ] Custom user‑agent used
+
+[ ] robots.txt checked programmatically
+
+[ ] urllib used for all HTTP requests
+
+[ ] BeautifulSoup + regex used for parsing
+
+[ ] 30,000+ entries scraped
+
+[ ] Missing fields set to None
+
+Cleaning
+[ ] Status normalized
+
+[ ] HTML removed
+
+[ ] Empty fields standardized
+
+[ ] Pre‑LLM snapshot saved (cleaned_data.json)
+
+LLM Standardization
+[ ] Batch input created with program + university
+
+[ ] Local TinyLlama model invoked through llm_hosting/app.py
+
+[ ] LLM output parsed correctly
+
+[ ] Two fields added to each record:
+
+llm-generated-program
+
+llm-generated-university
+
+[ ] Final merged dataset saved as llm_extend_applicant_data.json
+
+✔ Final Validation
+[ ] Final JSON contains all original fields
+
+[ ] LLM fields appear on every record
+
+[ ] No missing keys or malformed JSON
+
+[ ] README clearly explains the pipeline
+
+[ ] GitHub repo builds cleanly and runs with Python 3.10+
