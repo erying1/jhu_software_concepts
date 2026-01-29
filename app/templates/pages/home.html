@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+
+{% block title %}Home{% endblock title %}
+
+{% block header %}
+  <h1>Eric Rying, PhD </h1>
+  <h2>Technical Project/Program Manager @ Applied Materials</h2>
+{% endblock header %}
+
+{% block content %}
+  <div class="bio-section">
+    <div class="bio-text">
+      <p>Eric Rying is currently a Technical Project/Program Manager at Applied Materials in Sunnyvale, CA.  He has a B.S./M.S. in Electrical and Computer Engineering  
+         from Carnegie Mellon Univiersity in Pittsburgh, PA.  He also has a PhD in Electrical Engineering from North Carolina State University in Raleigh, NC where he
+         conducted multidisciplinary work involving selective silicon epitaxy as well as wavelet networks, which are a type of feedforward neural network.</p>
+
+      <br><p>He is currently enrolled in the M.S. in Artificial Intelligence online program for Engineering Professionals at Johns Hopkins University in Baltimore, MD. </p>
+    </div>
+    <div>
+      <img src="{{ url_for('static', filename='Eric_Rying_bio_photo.png') }}" alt="Eric Rying Profile Photo" class="bio-image">
+    </div>
+  </div>
+{% endblock content %}
