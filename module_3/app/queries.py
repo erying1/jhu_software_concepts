@@ -54,8 +54,39 @@ def get_all_results():
             "jhu_cs_masters": q7_jhu_cs_masters(conn),
             "top_schools_accept": q8_top_schools_phd_accept(conn),
             "top_schools_accept_llm": q9_llm_top_schools_phd_accept(conn),
-            "custom1": q10_custom(conn),
-            "custom2": q11_custom(conn),
+
+            # My two additional queries:
+            "top_universities": q10_custom(conn), 
+            "acceptance_by_degree": q11_custom(conn),
         }
     finally:
         conn.close()
+
+def q10_custom(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT llm_generated_university, COUNT(*) AS total_applications
+            FROM applicants
+            GROUP BY llm_generated_university
+            ORDER BY total_applications DESC
+            LIMIT 10;
+        """)
+        return cur.fetchall()
+
+def q11_custom(conn):
+    with conn.cursor() as cur:
+        cur.execute("""
+            SELECT 
+                degree,
+                COUNT(*) AS total_entries,
+                SUM(CASE WHEN status = 'Accepted' THEN 1 ELSE 0 END) AS total_acceptances,
+                ROUND(
+                    SUM(CASE WHEN status = 'Accepted' THEN 1 ELSE 0 END)::numeric 
+                    / COUNT(*) * 100, 2
+                ) AS acceptance_rate
+            FROM applicants
+            GROUP BY degree
+            ORDER BY acceptance_rate DESC;
+        """)
+        return cur.fetchall()
+

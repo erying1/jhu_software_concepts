@@ -52,27 +52,27 @@ def get_connection():
 def create_table(conn):
     with conn.cursor() as cur:
         cur.execute(
-            """
-            CREATE TABLE IF NOT EXISTS applicants (
-                p_id SERIAL PRIMARY KEY,
-                program TEXT,
-                comments TEXT,
-                date_added DATE,
-                url TEXT,
-                status TEXT,
-                term TEXT,
-                us_or_international TEXT,
-                gpa FLOAT,
-                gre FLOAT,
-                gre_v FLOAT,
-                gre_aw FLOAT,
-                degree TEXT,
-                llm_generated_program TEXT,
-                llm_generated_university TEXT
-            );
-            """
-        )
-        conn.commit()
+        """
+        CREATE TABLE IF NOT EXISTS applicants (
+            p_id SERIAL PRIMARY KEY,
+            program TEXT,
+            comments TEXT,
+            date_added DATE,
+            url TEXT UNIQUE,
+            status TEXT,
+            term TEXT,
+            us_or_international TEXT,
+            gpa FLOAT,
+            gre FLOAT,
+            gre_v FLOAT,
+            gre_aw FLOAT,
+            degree TEXT,
+            llm_generated_program TEXT,
+            llm_generated_university TEXT
+        );
+        """
+    )
+    conn.commit()
                                    
 def normalize_record(raw):
     return {
@@ -103,19 +103,22 @@ def insert_record(conn, record):
         cur.execute( 
             """ 
             INSERT INTO applicants ( 
-                    program, comments, date_added, url, status, term, 
-                    us_or_international, gpa, gre, gre_v, gre_aw, degree, 
-                    llm_generated_program, llm_generated_university 
+                program, comments, date_added, url, status, term, 
+                us_or_international, gpa, gre, gre_v, gre_aw, degree, 
+                llm_generated_program, llm_generated_university 
             ) 
             VALUES ( 
                 %(program)s, %(comments)s, %(date_added)s, %(url)s, %(status)s, %(term)s, 
                 %(us_or_international)s, %(gpa)s, %(gre)s, %(gre_v)s, %(gre_aw)s, %(degree)s, 
-                %(llm_generated_program)s, %(llm_generated_university)s 
-                ); 
-            """, 
+                %(llm_generated_program)s, %(llm_generated_university)s ) 
+            ON CONFLICT (url) DO NOTHING; 
+                """, 
             record, 
         ) 
-        conn.commit()
+        conn.commit() 
+        return cur.rowcount # ⭐ returns 1 if inserted, 0 if duplicate
+
+
 
         
 
@@ -129,11 +132,13 @@ def load_into_db(filepath: str):
     try:
         create_table(conn)
 
+        inserted = 0
+
         for record in data:
             clean = normalize_record(record)
-            insert_record(conn, clean)
+            inserted += insert_record(conn, clean)
 
-        print(f"Inserted {len(data)} records into PostgreSQL.")
+        print(f"Inserted {inserted} new records (duplicates skipped).")
 
     finally:
         conn.close()

@@ -12,6 +12,14 @@ from datetime import datetime  # optional if you want timestamp filters later
 def create_app():
     app = Flask(__name__)
     app.secret_key = "abc123" 
+
+    # ------------------------- 
+    # # Add missing Jinja filters 
+    # # ------------------------- 
+    @app.template_filter("na") 
+    def na(value): 
+        return value if value not in (None, "None") else "N/A"
+
     # -----------------------------
     # Jinja filter: format percentages
     # -----------------------------
@@ -22,7 +30,7 @@ def create_app():
         try:
             return f"{float(value):.2f}"
         except:
-            return value
+            return "N/A"
 
     # Register routes
     from .routes import bp as main_bp

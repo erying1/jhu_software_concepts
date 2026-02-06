@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     # update later to 30000 once verified to save time.  Initially use 500 to increase cycles of learning 
     # to validate
-    data = scrape_data(max_entries=40000)  # Updated to 40000 per Liv's instruction in the class video, i.e., > 30K for upcoming weeks' assignments for proper stats
+    data = scrape_data(max_entries=1000)  # Updated to 40000 per Liv's instruction in the class video, i.e., > 30K for upcoming weeks' assignments for proper stats
     
     # Raw data can be saved or passed to clean_data() in clean.py
     with open("raw_applicant_data.json", "w", encoding="utf-8") as f:

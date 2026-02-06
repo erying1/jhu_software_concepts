@@ -49,3 +49,45 @@ body {
 .results-list li {
     margin: 5px 0;
 }
+
+#load-progress-overlay {
+    display: none;
+}
+
+div.question { 
+    font-weight: 700 !important; /* force bold */ 
+    font-style: normal !important; /* ensure not italic */ 
+    margin-top: 22px; 
+    margin-bottom: 4px; 
+    font-size: 1.15rem; 
+    display: block; /* prevents inline inheritance issues */ 
+}
+
+
+
+.answer {
+    margin-left: 12px;
+    margin-bottom: 10px;
+    font-style: italic !important; /* answers italic */
+    font-size: 1rem;
+}
+
+.answer strong {
+    font-weight: 600 !important;   /* bold labels */
+    font-style: italic !important; /* labels stay italic */
+}
+
+/* Remove bold from entire answer block */ 
+.answer { 
+    font-weight: italic !important; 
+} /* Re-apply bold ONLY to the labels inside answers */ 
+    
+.answer strong {
+    font-weight: normal !important;   /* remove bold */
+    font-style: italic !important;    /* keep italic */
+}
+.answer em {
+    font-style: italic !important;
+    font-weight: normal !important;
+}
+

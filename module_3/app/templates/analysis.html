@@ -1,159 +1,253 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Grad School Café Data Analysis</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+{% extends "base.html" %}
 
-    <style>
-        .spinner-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            display: none;
-        }
-    </style>
-</head>
+{% block title %}Data Analysis{% endblock %}
 
-<body class="bg-light">
-
-<div class="spinner-overlay" id="spinner">
-    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
-        <span class="visually-hidden">Loading...</span>
-    </div>
-</div>
-
-<div class="container py-4">
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="fw-bold">Grad School Café Data Analysis</h1>
-
-        <div>
-            <form action="{{ url_for('main.pull_data') }}" method="post" class="d-inline" onsubmit="showSpinner()">
-                <button class="btn btn-primary me-2" type="submit"
-                        {% if pull_running %}disabled{% endif %}>
-                    Pull Data
-                </button>
-            </form>
-
-            <form action="{{ url_for('main.update_analysis') }}" method="post" class="d-inline" onsubmit="showSpinner()">
-                <button class="btn btn-secondary" type="submit"
-                        {% if pull_running %}disabled{% endif %}>
-                    Update Analysis
-                </button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Explanations -->
-    <div class="alert alert-info">
-        <strong>Pull Data</strong> scrapes new Grad Café entries and loads them into the database.<br>
-        <strong>Update Analysis</strong> refreshes the results using the latest data.
-    </div>
-
-    {% if pull_running %}
-        <div class="alert alert-warning">
-            Data pull in progress… please wait.
-        </div>
-    {% endif %}
-
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="alert alert-warning">
-            {% for msg in messages %}
-                {{ msg }}<br>
-            {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
-
-    <!-- Timestamp -->
-    <div class="text-muted mb-3">
-        <small>
-            Last analysis refresh: {{ results.timestamp if results.timestamp else "Just now" }}
-        </small>
-    </div>
-
-    <!-- Analysis Results -->
-    <h3 class="mt-4 mb-3">Analysis Results</h3>
-
-    <table class="table table-bordered bg-white">
-        <tbody>
-            <tr><th>Fall 2026 entries</th><td>{{ results.fall_2026_count }}</td></tr>
-            <tr><th>International percentage</th><td>{{ results.pct_international | pct }}%</td></tr>
-
-            <tr><th>Average GPA</th><td>{{ results.avg_metrics[0] }}</td></tr>
-            <tr><th>Average GRE</th><td>{{ results.avg_metrics[1] }}</td></tr>
-            <tr><th>Average GRE V</th><td>{{ results.avg_metrics[2] }}</td></tr>
-            <tr><th>Average GRE AW</th><td>{{ results.avg_metrics[3] }}</td></tr>
-
-            <tr><th>Average GPA (American, Fall 2026)</th><td>{{ results.avg_gpa_american }}</td></tr>
-            <tr><th>Acceptance rate (Fall 2026)</th><td>{{ results.pct_accept_fall_2026 | pct }}%</td></tr>
-            <tr><th>Average GPA of Fall 2026 Acceptances</th><td>{{ results.avg_gpa_accept_fall_2026 }}</td></tr>
-
-            <tr><th>JHU CS Masters applicants</th><td>{{ results.jhu_cs_masters }}</td></tr>
-            <tr><th>Top schools CS PhD acceptances</th><td>{{ results.top_schools_accept }}</td></tr>
-            <tr><th>Top schools CS PhD acceptances (LLM fields)</th><td>{{ results.top_schools_accept_llm }}</td></tr>
-        </tbody>
-    </table>
-
-    <!-- Custom Questions -->
-    <h3 class="mt-5">Custom Questions</h3>
-
-    <h5 class="mt-3">Average GPA by nationality</h5>
-    {% if results.custom1 %}
-        <table class="table table-striped bg-white">
-            <thead>
-                <tr><th>Nationality</th><th>Average GPA</th></tr>
-            </thead>
-            <tbody>
-                {% for nationality, gpa in results.custom1 %}
-                    <tr>
-                        <td>{{ nationality }}</td>
-                        <td>{{ gpa }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No GPA data available.</p>
-    {% endif %}
-
-    <h5 class="mt-4">Applicants by degree type</h5>
-    {% if results.custom2 %}
-        <table class="table table-striped bg-white">
-            <thead>
-                <tr><th>Degree</th><th>Count</th></tr>
-            </thead>
-            <tbody>
-                {% for degree, count in results.custom2 %}
-                    <tr>
-                        <td>{{ degree }}</td>
-                        <td>{{ count }}</td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>No degree data available.</p>
-    {% endif %}
-
-</div>
+{% block extra_css %}
+<style>
+    .spinner-overlay {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(255,255,255,0.8);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    }
+    
+    .question {
+        font-weight: 600;
+        margin-top: 25px;
+    }
+    .answer {
+        margin-left: 10px;
+        margin-bottom: 10px;
+    }
+</style>
 
 <script>
     function showSpinner() {
         document.getElementById("spinner").style.display = "flex";
     }
+
+    function startLoadProgress(event) {
+        event.preventDefault();
+
+        const overlay = document.getElementById("load-progress-overlay");
+        const bar = document.getElementById("load-progress-bar");
+        const label = document.getElementById("progress-stage-label");
+
+        overlay.style.display = "flex";
+
+        let width = 0;
+
+        // Stage durations
+        const scrapeTime = 800;   // 0–30%
+        const cleanTime  = 800;   // 30–60%
+        const loadTime   = 1200;  // 60–99%
+
+        // Stage 1: Scraping
+        label.textContent = "Scraping new entries…";
+        const stage1 = setInterval(() => {
+            width += 1;
+            if (width >= 30) {
+                clearInterval(stage1);
+                stage2();
+            }
+            bar.style.width = width + "%";
+        }, scrapeTime / 30);
+
+        // Stage 2: Cleaning
+        function stage2() {
+            label.textContent = "Cleaning data…";
+            const stage2 = setInterval(() => {
+                width += 1;
+                if (width >= 60) {
+                    clearInterval(stage2);
+                    stage3();
+                }
+                bar.style.width = width + "%";
+            }, cleanTime / 30);
+        }
+
+        // Stage 3: Loading
+        function stage3() {
+            label.textContent = "Loading into database…";
+            const stage3 = setInterval(() => {
+                width += 1;
+                if (width >= 99) {
+                    clearInterval(stage3);
+                }
+                bar.style.width = width + "%";
+            }, loadTime / 39);
+        }
+
+        // Submit form after animation begins
+        setTimeout(() => {
+            event.target.submit();
+        }, 300);
+    }
 </script>
 
-</body>
-</html>
+{% endblock %}
+
+{% block header %}
+Grad School Café Data Analysis
+{% endblock %}
+
+{% block content %}
+
+<div id="spinner" class="spinner-overlay">
+    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;"></div>
+</div>
+
+<div id="load-progress-overlay" class="spinner-overlay" style="display:none;">
+    <div style="width: 300px;">
+        <div class="progress">
+            <div id="load-progress-bar"
+                 class="progress-bar progress-bar-striped progress-bar-animated"
+                 role="progressbar"
+                 style="width: 0%;">
+            </div>
+        </div>
+        <p id="progress-stage-label" class="text-center mt-2">Scraping for new data…</p>
+    </div>
+</div>
+
+<!-- Button explanations required by assignment -->
+<div class="mb-3">
+    <small class="text-secondary d-block">
+        <strong>Pull Data</strong> scrapes new Grad Café entries using your Module 2 code and loads them into the database.
+    </small>
+    <small class="text-secondary d-block">
+        <strong>Update Analysis</strong> refreshes the analysis using the latest data, unless a data pull is currently running.
+    </small>
+</div>
+
+<!-- Buttons -->
+<div class="d-flex justify-content-between mb-4">
+
+    <!-- Pull Data (left) -->
+    <form method="POST" action="{{ url_for('main.pull_data') }}" onsubmit="return startLoadProgress(event)">
+        <button class="btn btn-primary" {% if pull_running %}disabled{% endif %}>Pull Data</button>
+    </form>
+
+
+
+    <!-- Update Analysis (right) -->
+    <form method="POST" action="{{ url_for('main.update_analysis') }}" onsubmit="showSpinner()">
+        <button class="btn btn-secondary">Update Analysis</button>
+    </form>
+
+</div>
+
+<!-- Flash messages -->
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <div class="alert alert-info">
+        {% for msg in messages %}
+            <div>{{ msg }}</div>
+        {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if last_data_pull %}
+    <p><strong>Last data pull:</strong> {{ last_data_pull }}</p>
+{% else %}
+    <p><strong>Last data pull:</strong> No data pull has been run yet.</p>
+{% endif %}
+
+<p><strong>Last analysis refresh:</strong> {{ results.timestamp }}</p>
+
+<h2 class="mt-4">Analysis</h2>
+<!-- Q1 -->
+<div class="question">How many entries do you have in your database who have applied for Fall 2026?</div>
+<div class="answer"><em>Answer: <strong>Applicant count:</strong> {{ results.fall_2026_count }}</em></div>
+
+<!-- Q2 -->
+<div class="question">What percentage of entries are from International students (not American or Other)?</div>
+<div class="answer"><em>Answer: <strong>Percent International:</strong> {{ results.pct_international | pct }}%</em></div>
+
+<!-- Q3 -->
+<div class="question">What is the average GPA, GRE, GRE V, and GRE AW of applicants who provided these metrics?</div>
+<div class="answer">
+    <em>Answer:
+    <strong>Average GPA:</strong> {{ results.avg_metrics[0] | na }},
+    <strong>Average GRE:</strong> {{ results.avg_metrics[1] | na }},
+    <strong>Average GRE V:</strong> {{ results.avg_metrics[2] | na }},
+    <strong>Average GRE AW:</strong> {{ results.avg_metrics[3] | na }}</em>
+</div>
+
+<!-- Q4 -->
+<div class="question">What is the average GPA of American students in Fall 2026?</div>
+<div class="answer"><em>Answer: <strong>Average GPA American:</strong> {{ results.avg_gpa_american | na }}</em></div>
+
+<!-- Q5 -->
+<div class="question">What percent of entries for Fall 2026 are Acceptances?</div>
+<div class="answer"><em>Answer: <strong>Acceptance percent:</strong> {{ results.pct_accept_fall_2026 | pct }}%</em></div>
+
+<!-- Q6 -->
+<div class="question">What is the average GPA of Fall 2026 Acceptances?</div>
+<div class="answer"><em>Answer: <strong>Average GPA Acceptance:</strong> {{ results.avg_gpa_accept_fall_2026 | na }}</em></div>
+
+<!-- Q7 -->
+<div class="question">How many entries applied to JHU for a Masters in CS?</div>
+<div class="answer"><em>Answer: <strong>JHU CS Masters applicants:</strong> {{ results.jhu_cs_masters }}</em></div>
+
+<!-- Q8 -->
+<div class="question">How many acceptances to Georgetown/MIT/Stanford/CMU for CS PhD (Fall 2026)?</div>
+<div class="answer"><em>Answer: <strong>Top CS PhD acceptances:</strong> {{ results.top_schools_accept }}</em></div>
+
+<!-- Q9 -->
+<div class="question">How many acceptances to top CS PhD programs using LLM‑generated fields?</div>
+<div class="answer"><em>Answer: <strong>Top CS PhD acceptances (LLM fields):</strong> {{ results.top_schools_accept_llm }}</em></div>
+
+
+<hr class="mt-5">
+
+<h3>Additional Questions</h3>
+
+<!-- Top Universities -->
+<div class="question">Which universities receive the most applications?</div>
+<table class="table table-bordered w-50">
+    <thead>
+        <tr>
+            <th>University</th>
+            <th>Total Applications</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for uni, count in results.top_universities %}
+        <tr>
+            <td>{{ uni }}</td>
+            <td>{{ count }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<!-- Acceptance Rate by Degree -->
+<div class="question">What is the acceptance rate by degree type?</div>
+<table class="table table-bordered w-50">
+    <thead>
+        <tr>
+            <th>Degree</th>
+            <th>Total Entries</th>
+            <th>Acceptances</th>
+            <th>Acceptance Rate (%)</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for degree, total, accepts, rate in results.acceptance_by_degree %}
+        <tr>
+            <td>{{ degree }}</td>
+            <td>{{ total }}</td>
+            <td>{{ accepts }}</td>
+            <td>{{ rate }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+{% endblock %}

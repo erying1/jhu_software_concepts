@@ -1,31 +1,40 @@
-<!-- templates/base.html -->
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Grad Café Analysis</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body>
+    <title>Grad School Café — {% block title %}{% endblock title %}</title>
 
-<nav class="navbar">
-    <h1>Grad School Café Data Analysis</h1>
+    <!-- Bootstrap -->
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <!-- Optional page‑specific CSS -->
+    {% block extra_css %}{% endblock extra_css %}
+</head>
+
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+        <span class="navbar-brand">Grad School Café</span>
+    </div>
 </nav>
 
-<div class="container">
-    {% with messages = get_flashed_messages() %}
-      {% if messages %}
-        <div class="flash">
-          {% for msg in messages %}
-            <p>{{ msg }}</p>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endwith %}
+<div class="container mt-4">
 
-    {% block content %}{% endblock %}
+    <!-- Page header -->
+    <header class="mb-4">
+        <h1>{% block header %}{% endblock header %}</h1>
+    </header>
+
+    <!-- Main content -->
+    {% block content %}
+    {% endblock content %}
+
 </div>
 
 </body>
 </html>
+
