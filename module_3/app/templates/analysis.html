@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Grad School Café Data Analysis</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        .spinner-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+
+<div class="spinner-overlay" id="spinner">
+    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+</div>
+
+<div class="container py-4">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold">Grad School Café Data Analysis</h1>
+
+        <div>
+            <form action="{{ url_for('main.pull_data') }}" method="post" class="d-inline" onsubmit="showSpinner()">
+                <button class="btn btn-primary me-2" type="submit"
+                        {% if pull_running %}disabled{% endif %}>
+                    Pull Data
+                </button>
+            </form>
+
+            <form action="{{ url_for('main.update_analysis') }}" method="post" class="d-inline" onsubmit="showSpinner()">
+                <button class="btn btn-secondary" type="submit"
+                        {% if pull_running %}disabled{% endif %}>
+                    Update Analysis
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Explanations -->
+    <div class="alert alert-info">
+        <strong>Pull Data</strong> scrapes new Grad Café entries and loads them into the database.<br>
+        <strong>Update Analysis</strong> refreshes the results using the latest data.
+    </div>
+
+    {% if pull_running %}
+        <div class="alert alert-warning">
+            Data pull in progress… please wait.
+        </div>
+    {% endif %}
+
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="alert alert-warning">
+            {% for msg in messages %}
+                {{ msg }}<br>
+            {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <!-- Timestamp -->
+    <div class="text-muted mb-3">
+        <small>
+            Last analysis refresh: {{ results.timestamp if results.timestamp else "Just now" }}
+        </small>
+    </div>
+
+    <!-- Analysis Results -->
+    <h3 class="mt-4 mb-3">Analysis Results</h3>
+
+    <table class="table table-bordered bg-white">
+        <tbody>
+            <tr><th>Fall 2026 entries</th><td>{{ results.fall_2026_count }}</td></tr>
+            <tr><th>International percentage</th><td>{{ results.pct_international | pct }}%</td></tr>
+
+            <tr><th>Average GPA</th><td>{{ results.avg_metrics[0] }}</td></tr>
+            <tr><th>Average GRE</th><td>{{ results.avg_metrics[1] }}</td></tr>
+            <tr><th>Average GRE V</th><td>{{ results.avg_metrics[2] }}</td></tr>
+            <tr><th>Average GRE AW</th><td>{{ results.avg_metrics[3] }}</td></tr>
+
+            <tr><th>Average GPA (American, Fall 2026)</th><td>{{ results.avg_gpa_american }}</td></tr>
+            <tr><th>Acceptance rate (Fall 2026)</th><td>{{ results.pct_accept_fall_2026 | pct }}%</td></tr>
+            <tr><th>Average GPA of Fall 2026 Acceptances</th><td>{{ results.avg_gpa_accept_fall_2026 }}</td></tr>
+
+            <tr><th>JHU CS Masters applicants</th><td>{{ results.jhu_cs_masters }}</td></tr>
+            <tr><th>Top schools CS PhD acceptances</th><td>{{ results.top_schools_accept }}</td></tr>
+            <tr><th>Top schools CS PhD acceptances (LLM fields)</th><td>{{ results.top_schools_accept_llm }}</td></tr>
+        </tbody>
+    </table>
+
+    <!-- Custom Questions -->
+    <h3 class="mt-5">Custom Questions</h3>
+
+    <h5 class="mt-3">Average GPA by nationality</h5>
+    {% if results.custom1 %}
+        <table class="table table-striped bg-white">
+            <thead>
+                <tr><th>Nationality</th><th>Average GPA</th></tr>
+            </thead>
+            <tbody>
+                {% for nationality, gpa in results.custom1 %}
+                    <tr>
+                        <td>{{ nationality }}</td>
+                        <td>{{ gpa }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No GPA data available.</p>
+    {% endif %}
+
+    <h5 class="mt-4">Applicants by degree type</h5>
+    {% if results.custom2 %}
+        <table class="table table-striped bg-white">
+            <thead>
+                <tr><th>Degree</th><th>Count</th></tr>
+            </thead>
+            <tbody>
+                {% for degree, count in results.custom2 %}
+                    <tr>
+                        <td>{{ degree }}</td>
+                        <td>{{ count }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No degree data available.</p>
+    {% endif %}
+
+</div>
+
+<script>
+    function showSpinner() {
+        document.getElementById("spinner").style.display = "flex";
+    }
+</script>
+
+</body>
+</html>

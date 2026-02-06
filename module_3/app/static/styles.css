@@ -1,0 +1,51 @@
+/* Modern Concepts in Python: Spring 2026
+ * by Eric Rying
+ * Module 3 Assignment: Database Queries Assignment
+ * static/styles.css
+ */
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar {
+    background: #003366;
+    color: white;
+    padding: 15px;
+}
+
+.container {
+    padding: 20px;
+}
+
+.button-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    background: #0055aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.btn:hover {
+    background: #003f7f;
+}
+
+.flash {
+    background: #ffefc2;
+    padding: 10px;
+    border-left: 4px solid #ffcc00;
+    margin-bottom: 20px;
+}
+
+.results-list li {
+    margin: 5px 0;
+}
