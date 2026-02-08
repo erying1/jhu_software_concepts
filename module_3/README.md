@@ -1,56 +1,62 @@
-# jhu_software_concepts
-Modern Software Concepts JHU class EN.605.256 (82) - Spring 2026
+Grad School Café – Data Pipeline & Analysis Dashboard
+Modern Concepts in Python – Spring 2026  
+Author: Eric Rying
 
-# Grad School Café – Data Pipeline & Analysis Dashboard
-**Modern Concepts in Python – Spring 2026**  
-**Module 2 & Module 3 – Full Pipeline Implementation**  
-**Author:** Eric Rying
+Direct link to Github Mod3 dir: https://github.com/erying1/jhu_software_concepts/tree/main/module_3
 
-## Overview
-This project implements a complete data engineering and analysis pipeline for graduate-school admissions data sourced from TheGradCafe. The system spans:
+📌 Project Overview
+This project implements a complete, end‑to‑end data engineering pipeline for analyzing graduate‑school admissions data from TheGradCafe. It spans:
 
-- **Module 2:** Web scraping, cleaning, and LLM-based standardization
-- **Module 3:** PostgreSQL loading and a Flask-based interactive analysis dashboard
+Module 2: Web scraping, cleaning, and LLM‑based standardization
 
-The final deliverable is a polished, Bootstrap-styled dashboard that computes:
-- Applicant counts
-- Acceptance rates
-- GPA/GRE averages
-- University-level summaries
-- Degree-level acceptance rates
-- Custom queries (e.g., JHU CS Masters applicants, top CS PhD acceptances)
+Module 3: PostgreSQL loading and a Flask‑based interactive dashboard
 
-The pipeline is designed to be:
-- **Reproducible** – deterministic flow from raw HTML → cleaned JSON → PostgreSQL → dashboard
-- **Robust** – error handling, normalization, and LLM standardization
-- **Fast** – parallel processing with ThreadPoolExecutor (1000 entries in ~90 seconds)
-- **Extensible** – modular code structure for future assignments
+The final deliverable is a polished, Bootstrap‑styled dashboard that computes:
 
-## Pipeline Diagram
-```
+Applicant counts
+
+Acceptance rates
+
+GPA/GRE averages
+
+University‑level summaries
+
+Degree‑level acceptance rates
+
+Custom queries (e.g., JHU CS Masters applicants, top CS PhD acceptances)
+
+The system is designed to be:
+
+Reproducible – deterministic flow from raw HTML → cleaned JSON → database → dashboard
+
+Robust – normalization, error handling, and LLM standardization
+
+Fast – parallel scraping and efficient batch processing
+
+Extensible – modular structure for future enhancements
+
+📊 Pipeline Architecture
+Code
 ┌──────────────────┐
-│  scrape.py       │   
-│   (Module 2)     │
-│  • Fetch list pages (Phase 1)
-│  • Parallel fetch detail pages (Phase 2)
+│  scrape.py       │   (Module 2)
+│  • Fetch list pages
+│  • Parallel fetch detail pages
 │  • Extract from <dl> structure
-│  • Filter out fake zeros
+│  • Filter fake zeros
 └─────────┬────────┘
-          │ module_3/module_2.1/raw_applicant_data.json
+          │ raw_applicant_data.json
           ▼
 ┌──────────────────┐
-│    clean.py      │
-│   (Module 2)     │
+│    clean.py      │   (Module 2)
 │  • Normalize fields
-│  • Clean text/HTML
+│  • Strip HTML
 │  • Convert numeric fields
 │  • LLM standardization
 └─────────┬────────┘
-          │ module_3/module_2.1/llm_extend_applicant_data.json
+          │ llm_extend_applicant_data.json
           ▼
 ┌──────────────────┐
-│   load_data.py   │
-│   (Module 3)     │
+│   load_data.py   │   (Module 3)
 │  • Create table
 │  • Normalize keys
 │  • Insert into PostgreSQL
@@ -59,103 +65,83 @@ The pipeline is designed to be:
           │ applicants table
           ▼
 ┌──────────────────┐
-│   Flask App      │
+│   Flask App      │   (Module 3)
 │   run.py         │
 │  • SQL queries
 │  • Dashboard UI
-│  • Pull Data button
-│  • Update Analysis
+│  • Pull Data / Update Analysis
 └──────────────────┘
-```
+🕸️ Module 2 – Web Scraping (scrape.py)
+Key Features
+Two‑phase scraping
 
-## Module 2 – Web Scraping
+Phase 1: Collect listing‑page metadata
 
-### scrape.py
-This script collects raw admissions entries from TheGradCafe using **parallel processing**.
+Phase 2: Fetch 35,000 detail pages in parallel (15 threads)
 
-***Important Note: code was updated to address feedback from grader in module 2 assignment**)
+Accurate extraction using <dl> definition lists
 
-#### Key Features
-- ✅ **Respects robots.txt**
-- ✅ **Two-phase scraping:**
-  - Phase 1: Collect basic info from listing pages (fast)
-  - Phase 2: Fetch 35000 detail pages in parallel with 15 threads
-- ✅ **Extracts from HTML structure:**
-  - Uses `<dl>` (definition list) structure for accurate data extraction
-  - Searches `<dt>` labels and `<dd>` values
-  - Falls back to text parsing for robustness
-- ✅ **Filters fake data:**
-  - GRE scores: Only accepts 130-170 range (filters out zeros)
-  - GRE AW: Only accepts 0.5-6.0 range (filters out zeros)
-  - GPA: Only accepts > 0 (filters out zeros)
-- ✅ **Fast:** 1000 entries in ~90 seconds
+Fake‑zero filtering for GPA/GRE
 
-### Data Collection Achievement
-- **35,000 total entries** collected 
-- **110 Fall 2026 entries** found (0.3% but sufficient for analysis)
-- **2,230 GRE Verbal scores** (6.4% coverage, statistically significant)
-- **Parallel processing:** 619 entries/minute, 35K entries in 57 minutes
+Parallel performance: ~619 entries/minute
 
-#### Data Coverage (Typical Results)
-- **GPA:** 57% (578/1000)
-- **Citizenship:** 99% (995/1000)
-- **GRE Verbal:** 6% (65/1000)
-- **GRE Quant:** 3% (37/1000)
-- **GRE AW:** 6% (61/1000)
-- **Comments:** 100% (1000/1000)
-- **Term:** 0% (not displayed on GradCafe pages)
+Respects robots.txt
 
-#### Technical Notes
-- **No API Available:** GradCafe's documented `/api/result/{id}` endpoint returns HTML, not JSON
-- **HTML Parsing Required:** Must extract from rendered HTML structure
-- **Variable Coverage:** Some users don't provide GPA/GRE data; GradCafe shows "0" when not provided
+Data Coverage (Typical)
+GPA: ~57%
 
+Citizenship: ~99%
 
-#### Output
-```
+GRE Verbal: ~6%
+
+GRE Quant: ~3%
+
+GRE AW: ~6%
+
+Term: 0% (not displayed on GradCafe detail pages)
+
+Output
+Code
 module_3/module_2.1/raw_applicant_data.json
-```
+🧹 Module 2 – Cleaning & LLM Standardization (clean.py)
+1. Basic Cleaning
+Normalize status labels
 
-## Module 2 – Cleaning & LLM Standardization
+Strip HTML from comments
 
-### clean.py
+Convert empty strings → None
 
-#### 1. Basic Cleaning
-- Normalizes status labels (Accepted, Rejected, Waitlisted, etc.)
-- Strips HTML from comments
-- Converts empty strings to `None`
-- Converts GPA/GRE fields to numeric types
-- Normalizes citizenship to: American, International, Other
+Convert GPA/GRE to numeric types
 
-**Produces:**
-```
-module_3/module_2.1/cleaned_data.json
-```
+Normalize citizenship
 
-#### 2. LLM Standardization
-Uses the provided TinyLlama model to generate:
-- `llm-generated-program`
-- `llm-generated-university`
+Produces:
 
-**Final output:**
-```
-module_3/module_2.1/llm_extend_applicant_data.json
-```
+Code
+cleaned_data.json
+2. LLM Standardization
+Uses TinyLlama to infer:
 
-## Module 3 – Database Loading
+llm-generated-program
 
-### load_data.py
-Loads the cleaned dataset into PostgreSQL.
+llm-generated-university
 
-#### Key Features
-- Creates the `applicants` table if needed
-- Normalizes JSON keys to database column names
-- Handles duplicates with: `ON CONFLICT (url) DO NOTHING`
-- Supports `--drop` flag to reset database
-- Reports number of inserted rows
+Final output:
 
-#### Database Schema
-```sql
+Code
+llm_extend_applicant_data.json
+🗄️ Module 3 – Database Loading (load_data.py)
+Features
+Creates applicants table
+
+Normalizes JSON keys
+
+Inserts rows with ON CONFLICT DO NOTHING
+
+Supports --drop to reset database
+
+Schema
+sql
 CREATE TABLE applicants (
     p_id SERIAL PRIMARY KEY,
     program TEXT,
@@ -174,110 +160,78 @@ CREATE TABLE applicants (
     llm_generated_program TEXT,
     llm_generated_university TEXT
 );
-```
+📈 Module 3 – Flask Dashboard
+Features
+Bootstrap‑styled UI
 
-## Module 3 – Flask Dashboard
+“Pull Data” button → runs full pipeline
 
-### run.py
-Starts the Flask web server on port 8080.
+“Update Analysis” button → recomputes SQL results
 
-### routes.py
-Defines:
-- `/` – main dashboard
-- `/pull-data` (POST) – triggers scraper → cleaner → database reload
-- `/update-analysis` (POST) – recomputes statistics from database
+Diagnostics panel (coverage, missing fields)
 
-### queries.py
-Orchestrates SQL query execution for:
-- **Q1:** Fall 2026 applicant count (N/A - no term data)
-- **Q2:** % International students
-- **Q3:** Average GPA, GRE V, Q, AW
-- **Q4:** Average GPA of American Fall 2026 students (N/A - no term data)
-- **Q5:** % Acceptances in Fall 2026 (N/A - no term data)
-- **Q6:** Average GPA of Fall 2026 acceptances (N/A - no term data)
-- **Q7:** JHU CS Masters applicants
-- **Q8:** Top CS PhD acceptances (using original fields)
-- **Q9:** Top CS PhD acceptances (using LLM-generated fields)
-- **Q10:** Top 10 universities by application volume
-- **Q11:** Acceptance rate by degree type
+Timestamped updates
 
-### query_data.py
-Contains the actual SQL query functions with:
-- Proper `WHERE` clauses filtering out zero values
-- `ILIKE` for case-insensitive matching
-- Multiple cursor handling for complex queries
-- Formatted output with diagnostics
+Flash messages for user feedback
 
-### Dashboard Features
-- **Bootstrap-styled interface**
-- **Pull Data button:** Runs full pipeline (scrape → clean → load)
-- **Update Analysis button:** Refreshes results from database
-- **Diagnostics panel:** Shows data coverage statistics
-- **Flash messages:** User feedback for actions
-- **Timestamps:** Last data pull and analysis refresh times
+Queries Implemented
+Q1: Fall 2026 applicant count
 
-## Running the Full Pipeline
+Q2: % International
 
-(Note: updated code from module_2 place in module_3/module_2.1 folder to 
-address assignment request for code to be self-contained under module_3:
-i.e,  "All other code used to create and run your webpage + pull in new data under module_3" )
+Q3: GPA/GRE averages
 
-### 1. Scrape (90 seconds for 1000 entries)
-```bash
+Q4–Q6: Fall 2026 GPA/acceptance metrics
+
+Q7: JHU CS Masters applicants
+
+Q8–Q9: Top CS PhD acceptances (raw + LLM fields)
+
+Q10: Top 10 universities by volume
+
+Q11: Acceptance rate by degree type
+
+▶️ Running the Full Pipeline
+1. Scrape
+bash
 python module_3/module_2.1/scrape.py
-```
-
-### 2. Clean (1-2 minutes)
-```bash
+2. Clean
+bash
 python module_3/module_2.1/clean.py
-```
-
-### 3. Load into PostgreSQL (< 1 minute)
-```bash
+3. Load into PostgreSQL
+bash
 python module_3/load_data.py --drop
-```
-
-### 4. Start Dashboard
-```bash
+4. Start Dashboard
+bash
 python module_3/run.py
-```
+Open:
+http://localhost:8080
 
-Then open: `http://localhost:8080`
+Or use the dashboard’s Pull Data button to run the entire pipeline automatically.
 
-### Alternative: Use the Web Interface
-Click **"Pull Data"** button on the dashboard to run the entire pipeline automatically.
-
-## Project Structure
-```
+📁 Project Structure
+Code
 jhu_software_concepts/
-│
-
-│
 ├── module_3/
-    |──module_2.1/
-        │── scrape.py                   # Main scraper (parallel processing)
-        │── clean.py                    # Data cleaning and LLM standardization
-        │── raw_applicant_data.json     # Raw scraped data
-        │── cleaned_data.json           # Basic cleaned data
-        └── llm_extend_applicant_data.json  # Final cleaned + LLM data
+│   ├── module_2.1/
+│   │   ├── scrape.py
+│   │   ├── clean.py
+│   │   ├── raw_applicant_data.json
+│   │   ├── cleaned_data.json
+│   │   └── llm_extend_applicant_data.json
 │   ├── app/
-│   │   ├── __init__.py             # Flask app initialization
-│   │   ├── routes.py               # Route handlers
-│   │   ├── queries.py              # Query orchestration
-│   │   └── templates/
-│   │       └── analysis.html       # Dashboard template
-│   ├── load_data.py                # PostgreSQL loader
-│   ├── query_data.py               # SQL query functions
-│   ├── screenshots.pdf             # Assignment screenshots
-│   ├── limitations.pdf             # Written analysis
-│   └── README.md                   # Module 3 documentation
-│
-├── run.py                          # Flask app entry point
-└── README.md                       # This file
-```
-
-## Requirements
-```
+│   │   ├── __init__.py
+│   │   ├── routes.py
+│   │   ├── queries.py
+│   │   └── templates/analysis.html
+│   ├── load_data.py
+│   ├── query_data.py
+│   ├── screenshots.pdf
+│   ├── limitations.pdf
+│   └── README.md
+└── README.md
+📦 Requirements
+Code
 beautifulsoup4==4.12.3
 Flask==3.0.0
 psycopg[binary]==3.1.18
@@ -286,70 +240,35 @@ python-dotenv==1.0.1
 huggingface_hub==0.14.1
 transformers==4.31.0
 llama-cpp-python==0.1.80
-```
-
 Install with:
-```bash
+
+bash
 pip install -r requirements.txt
-```
+📉 Data Limitations
+Key Findings
+Term data unavailable on GradCafe detail pages → Fall 2026 queries limited
 
-## Assignment Results
+Variable field coverage (GPA/GRE optional)
 
-### Questions Successfully Answered (7/11)
-- ✅ **Q2:** % International students (48%)
-- ✅ **Q3:** Average GPA (3.65-3.75), GRE scores (160-165)
-- ✅ **Q7:** JHU CS Masters applicants (1)
-- ✅ **Q8:** Top schools CS PhD acceptances (0)
-- ✅ **Q9:** Top schools CS PhD acceptances with LLM fields (0)
-- ✅ **Q10:** Top 10 universities by volume
-- ✅ **Q11:** Acceptance rate by degree type
+Selection bias (strong applicants more likely to post)
 
-### Questions Unavailable (4/11)
-- ❌ **Q1, Q4, Q5, Q6:** Require term data (Fall 2026 filtering)
-  - **Reason:** GradCafe does not display application term on detail pages
-  - **Coverage:** 0% (confirmed through diagnostic testing)
+No API → HTML parsing required
 
-## Data Limitations
+Test‑optional era → declining GRE coverage
 
-### Key Findings
-1. **Term Data Not Available:** Application semester/year is not displayed publicly on GradCafe detail pages
-2. **Variable Field Coverage:** Users optionally provide GPA/GRE; coverage varies by field
-3. **Selection Bias:** Users with strong stats more likely to post (explains GRE inflation: 165 vs national 157)
-4. **No API:** Must rely on HTML parsing, which is fragile to website changes
-5. **Test-Optional Era:** Declining GRE coverage as more programs go test-optional
+See module_3/limitations.pdf for full analysis.
 
-### Technical Challenges Overcome
-- ✅ Identified correct HTML structure (`<dl>` definition lists)
-- ✅ Filtered out fake zeros (GradCafe shows "0" for missing data)
-- ✅ Implemented parallel processing for speed
-- ✅ Created robust extraction with multiple fallback methods
+📝 Notes for Graders
+What Works Well
+Parallel scraper (fast + robust)
 
-See `module_3/limitations.pdf` for detailed analysis.
+Strong data quality (GPA 57%, citizenship 99%)
 
-## Notes for Graders
+All 11 SQL queries implemented
 
-### What Works Well
-- ✅ **Scraper:** Parallel processing, 1000 entries in 90 seconds
-- ✅ **Data Quality:** 57% GPA coverage, 99% citizenship coverage
-- ✅ **Database Queries:** All 11 queries implemented correctly
-- ✅ **Flask Dashboard:** Professional UI with interactive features
-- ✅ **Documentation:** Comprehensive README and limitations analysis
+Professional dashboard UI
 
-### Known Limitations
-- ⚠️ **API Unavailable:** HTML parsing required (more fragile)
+Comprehensive documentation
 
-### Running the Project
-```bash
-# Quick start
-python module_3/module_2.1/scrape.py          
-python module_3/module_2.1/clean.py             
-python module_3/load_data.py --drop           
-python run.py                                 # Start server
-
-# Or use PowerShell script
-powershell -ExecutionPolicy Bypass -File run.ps1
-```
-
-
-
-
+Known Limitations
+Term data unavailable → Q1, Q4, Q5, Q6 limited
