@@ -1,0 +1,15 @@
+# scrape.py
+import urllib.robotparser
+from urllib.parse import urljoin
+
+BASE_URL = "https://www.thegradcafe.com/"
+
+def check_robots():
+    robots_url = urljoin(BASE_URL, "robots.txt")
+    rp = urllib.robotparser.RobotFileParser()
+    rp.set_url(robots_url)
+    rp.read()
+    # Use a reasonable user-agent string
+    user_agent = "jhu-module2-scraper"
+    allowed = rp.can_fetch(user_agent, urljoin(BASE_URL, "survey/"))
+    return allowed

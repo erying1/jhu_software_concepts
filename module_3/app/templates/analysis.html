@@ -250,4 +250,29 @@ Grad School Café Data Analysis
     </tbody>
 </table>
 
+<div class="card mt-4">
+    <div class="card-header bg-info text-white">
+        Scraper Diagnostic Panel
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered table-sm">
+            <tbody>
+                {% for key, value in scraper_diag.items() %}
+                <tr>
+                    <td>{{ key }}</td>
+                    <td>
+                        {% if "missing" in key and value > 0 %}
+                            <span class="text-danger">{{ value }}</span>
+                        {% else %}
+                            <span class="text-success">{{ value }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
 {% endblock %}
