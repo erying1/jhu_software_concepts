@@ -30,7 +30,7 @@ MODEL_FILE = os.getenv(
 
 N_THREADS = int(os.getenv("N_THREADS", str(os.cpu_count() or 2)))
 N_CTX = int(os.getenv("N_CTX", "512"))
-N_GPU_LAYERS = int(os.getenv("N_GPU_LAYERS", "0"))  # 0 → CPU-only
+N_GPU_LAYERS = int(os.getenv("N_GPU_LAYERS", "-1"))  # Try using my RTX3090 to speed up; 0 → CPU-only
 #N_GPU_LAYERS = 999  # Large value to use GPU if available, but still run on CPU if no compatible GPU is detected
 
 CANON_UNIS_PATH = os.getenv("CANON_UNIS_PATH", "canon_universities.txt")
@@ -124,6 +124,7 @@ def _load_llm() -> Llama:
     model_path = os.path.join(BASE_DIR, "models", MODEL_FILE)
 
     print("Loading model:", model_path)
+    print(f"Using {N_GPU_LAYERS} GPU layers")
 
     #model_path = hf_hub_download(
     #    repo_id=MODEL_REPO,
@@ -139,8 +140,10 @@ def _load_llm() -> Llama:
         n_threads=N_THREADS,
         n_gpu_layers=N_GPU_LAYERS,
         n_batch = 512,
-        verbose=False,
+        verbose=True,  # CHANGE TO True to see GPU messages
     )
+    print(f"Model loaded. GPU layers: {N_GPU_LAYERS}")  # ADD THIS LINE
+
     return _LLM
 
 

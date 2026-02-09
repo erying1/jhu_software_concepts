@@ -177,7 +177,7 @@ def load_data(filename: str = "applicant_data.json") -> List[Dict]:
 
 def llm_clean_batch(records: list[dict]) -> list[dict]:
     """
-    Calls the local LLM standardizer (llm_hosting/app.py) on a batch of records.
+    Calls the local LLM standardizer (module_3/module_2.1/llm_hosting/app.py) on a batch of records.
     Returns a list of dicts with LLM-generated fields merged in.
     """
 
