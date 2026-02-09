@@ -393,6 +393,6 @@ python -m pip install -r requirements.txt
 
 ## 📧 Contact
 
-**Eric Rying**  
-Modern Concepts in Python – Spring 2026  
-Johns Hopkins University
+**Eric Rying, PhD**  
+Modern Concepts in Python – Spring 2026  @ Johns Hopkins University
+erying1@jh.edu
