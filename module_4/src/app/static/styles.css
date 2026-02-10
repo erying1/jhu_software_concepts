@@ -1,0 +1,93 @@
+/* Modern Concepts in Python: Spring 2026
+ * by Eric Rying
+ * Module 3 Assignment: Database Queries Assignment
+ * static/styles.css
+ */
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar {
+    background: #003366;
+    color: white;
+    padding: 15px;
+}
+
+.container {
+    padding: 20px;
+}
+
+.button-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn {
+    padding: 10px 20px;
+    background: #0055aa;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.btn:hover {
+    background: #003f7f;
+}
+
+.flash {
+    background: #ffefc2;
+    padding: 10px;
+    border-left: 4px solid #ffcc00;
+    margin-bottom: 20px;
+}
+
+.results-list li {
+    margin: 5px 0;
+}
+
+#load-progress-overlay {
+    display: none;
+}
+
+div.question { 
+    font-weight: 700 !important; /* force bold */ 
+    font-style: normal !important; /* ensure not italic */ 
+    margin-top: 22px; 
+    margin-bottom: 4px; 
+    font-size: 1.15rem; 
+    display: block; /* prevents inline inheritance issues */ 
+}
+
+
+
+.answer {
+    margin-left: 12px;
+    margin-bottom: 10px;
+    font-style: italic !important; /* answers italic */
+    font-size: 1rem;
+}
+
+.answer strong {
+    font-weight: 600 !important;   /* bold labels */
+    font-style: italic !important; /* labels stay italic */
+}
+
+/* Remove bold from entire answer block */ 
+.answer { 
+    font-weight: italic !important; 
+} /* Re-apply bold ONLY to the labels inside answers */ 
+    
+.answer strong {
+    font-weight: normal !important;   /* remove bold */
+    font-style: italic !important;    /* keep italic */
+}
+.answer em {
+    font-style: italic !important;
+    font-weight: normal !important;
+}
+

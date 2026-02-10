@@ -1,0 +1,220 @@
+# Modern Concepts in Python: Spring 2026
+# by Eric Rying
+#
+# Module 3: Database Queries Assignment Experiment 
+#
+# load_data.py
+
+"""
+load_data.py — Module 3 Database Loader
+---------------------------------------
+This script loads the cleaned and LLM‑standardized applicant dataset into a
+PostgreSQL database for analysis in the Module 3 Flask dashboard.
+
+Key responsibilities:
+• Load llm_extend_applicant_data.json from the Module 2 directory.
+• Connect to the local PostgreSQL instance.
+• Create the applicants table if it does not already exist.
+• Normalize field names from the JSON into database column names.
+• Insert each record, skipping duplicates using ON CONFLICT(url) DO NOTHING.
+• Report how many new rows were inserted.
+
+This file forms the bridge between the Module 2 data pipeline and the Module 3
+interactive analysis dashboard.
+"""
+
+# Note: How to start postgres locally (Windows):
+# & C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres
+
+
+import json
+from pathlib import Path
+import psycopg
+
+import argparse
+
+import os 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "llm_extend_applicant_data.json")
+#DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "cleaned_data.json")
+
+
+
+# -----------------------------
+# Load JSON from disk
+# -----------------------------
+def load_json(filepath: str):
+    file_path = Path(filepath)
+
+    print(f"Loading file... '{filepath}'...") 
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {filepath}")
+
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+# -----------------------------
+# Connect to PostgreSQL
+# -----------------------------
+def get_connection():
+    return psycopg.connect(
+        dbname="studentCourses",
+        user="postgres",
+        password="Tolkien321",
+        host="localhost",
+        port=5432,
+    )
+
+
+# -----------------------------
+# Create applicants table
+# -----------------------------
+def create_table(conn):
+    with conn.cursor() as cur:
+        cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS applicants (
+            p_id SERIAL PRIMARY KEY,
+            program TEXT,
+            comments TEXT,
+            date_added DATE,
+            url TEXT UNIQUE,
+            status TEXT,
+            status_date TEXT,               
+            term TEXT,
+            us_or_international TEXT,
+            gpa FLOAT,
+            gre FLOAT,
+            gre_v FLOAT,
+            gre_aw FLOAT,
+            degree TEXT,
+            llm_generated_program TEXT,
+            llm_generated_university TEXT
+        );
+        """
+    )
+    conn.commit()
+                                   
+def normalize_record(raw):
+    return {
+        "program": raw.get("program") or raw.get("program_name"),
+        "comments": raw.get("comments"),
+        "date_added": raw.get("date_added"),
+        "url": raw.get("entry_url"),
+        "status": raw.get("status"),
+        "status_date": raw.get("status_date"),  
+        "term": raw.get("term"),
+        "us_or_international": raw.get("citizenship"),
+        "gpa": raw.get("gpa"),
+        "gre": raw.get("gre_total"),
+        "gre_v": raw.get("gre_v"),
+        "gre_aw": raw.get("gre_aw"),
+        "degree": raw.get("degree_level"),
+        "llm_generated_program": raw.get("llm_generated_program") or raw.get("llm-generated-program"),
+        "llm_generated_university": raw.get("llm_generated_university") or raw.get("llm-generated-university"),
+    }
+
+def reset_database(dbname="studentCourses"): 
+    """Drop and recreate the studentCourses database using psycopg (v3).""" 
+    print(f"Resetting database '{dbname}'...") 
+    
+    # Connect to postgres (not the target DB) 
+    conn = psycopg.connect( 
+        dbname="postgres", 
+        user="postgres", 
+        password="Tolkien321", 
+        host="localhost", 
+        port=5432, 
+        autocommit=True 
+    ) 
+    
+    with conn.cursor() as cur: 
+        # Terminate active connections 
+        cur.execute(""" 
+                SELECT pg_terminate_backend(pid) 
+                FROM pg_stat_activity 
+                WHERE datname = %s; 
+            """, (dbname,)) 
+    
+        # Drop database (must use quotes for case-sensitive name) 
+        cur.execute(f'DROP DATABASE IF EXISTS "{dbname}";') 
+    
+        # Recreate database 
+        cur.execute(f'CREATE DATABASE "{dbname}";') 
+
+    conn.close() 
+    print(f"Database '{dbname}' recreated successfully.")
+
+
+
+# -----------------------------
+# Insert a single record
+# -----------------------------
+
+def insert_record(conn, record): 
+    with conn.cursor() as cur: 
+        cur.execute( 
+            """ 
+            INSERT INTO applicants (
+                program, comments, date_added, url, status, status_date, term,
+                us_or_international, gpa, gre, gre_v, gre_aw, degree,
+                llm_generated_program, llm_generated_university
+            )
+            VALUES (
+                %(program)s, %(comments)s, %(date_added)s, %(url)s, %(status)s, %(status_date)s, %(term)s,
+                %(us_or_international)s, %(gpa)s, %(gre)s, %(gre_v)s, %(gre_aw)s, %(degree)s,
+                %(llm_generated_program)s, %(llm_generated_university)s
+          )
+            ON CONFLICT (url) DO NOTHING; 
+                """, 
+            record, 
+        ) 
+        conn.commit() 
+        return cur.rowcount # returns 1 if inserted, 0 if duplicate
+
+
+
+        
+
+# -----------------------------
+# Main loader
+# -----------------------------
+def load_into_db(filepath: str):
+    data = load_json(filepath)
+    conn = get_connection()
+
+    try:
+        create_table(conn)
+
+        inserted = 0
+
+        for record in data:
+            clean = normalize_record(record)
+            inserted += insert_record(conn, clean)
+
+        print(f"Inserted {inserted} new records (duplicates skipped).")
+
+    finally:
+        conn.close()
+
+
+# ----------------------------- 
+# # CLI entrypoint 
+# # ----------------------------- 
+if __name__ == "__main__": 
+    parser = argparse.ArgumentParser(description="Load applicant data into PostgreSQL.") 
+    parser.add_argument( 
+        "--drop", 
+        action="store_true", 
+        help="Drop and recreate the studentCourses database before loading." 
+    ) 
+    args = parser.parse_args() 
+    
+    try: 
+        if args.drop: 
+            reset_database("studentCourses") 
+            
+        load_into_db(DATA_FILE) 
+    
+    except Exception as e: 
+        print(f"Error: {e}")

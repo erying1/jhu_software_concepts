@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Modern Software Concepts - {% block title %}{% endblock title %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+ <h1>Modern Software Concepts in Python</h1>
+ <h2>JHU Course 645.256</h2>
+ <strong><nav>
+    <ul class="menu">
+      <li><a href="{{ url_for{'about'}}}">About</a></li>li
+      <li><a href="{{ url_for{'contact'}}}">Contact</a></li>li
+    </ul>
+ </nav></strong>
+ <img src="{{url_for{'static', filename='python.jpg'}}}"align="middle"style="width:100px; height:100px;"/>
+</body>
+</html>
