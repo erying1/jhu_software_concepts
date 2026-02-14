@@ -1,49 +1,45 @@
-"""Pytest configuration and shared fixtures"""
-import pytest
-import os
+# Fix for tests/conftest.py
+# This ensures TESTING is properly set
+
 import sys
+import os
+import pytest
 
-# Add src directory to Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+# Add parent directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-@pytest.fixture
+from src.app import create_app
+
+@pytest.fixture(scope="session")
 def app():
-    """Create Flask app for testing"""
-    from src.app import create_app
-    test_config = {
-        'TESTING': True,
-        'DATABASE_URL': os.getenv('TEST_DATABASE_URL', 'postgresql://localhost/gradcafe_test'),
-        'SECRET_KEY': 'test-secret-key',
-    }
-    app = create_app(test_config)
-    yield app
+    """Create Flask app for testing (persistent across requests)."""
+    app = create_app()
+    return app
 
 @pytest.fixture
 def client(app):
-    """Flask test client"""
+    """Create test client."""
     return app.test_client()
 
-@pytest.fixture
-def sample_applicant_data():
-    """Sample test data"""
-    return [
-        {
-            "program_name": "Computer Science",
-            "university": "Stanford University",
-            "date_added": "2026-01-15",
-            "entry_url": "https://www.thegradcafe.com/result/test001",
-            "status": "Accepted",
-            "status_date": "15 Jan",
-            "degree_level": "PhD",
-            "comments": "Great program!",
-            "term": "Fall 2026",
-            "citizenship": "International",
-            "gpa": 3.9,
-            "gre_total": 330,
-            "gre_v": 165,
-            "gre_q": 165,
-            "gre_aw": 5.0,
-            "llm-generated-program": "Computer Science",
-            "llm-generated-university": "Stanford University"
-        }
+@pytest.fixture 
+def sample_applicant_data(): 
+    return [ 
+        { 
+            "program": "CS PhD", 
+            "comments": "Test", 
+            "date_added": "2024-01-01", 
+            "url": "http://example.com/1", 
+            "status": "Accepted", 
+            "status_date": "2024-01-02", 
+            "term": "Fall 2026", 
+            "us_or_international": "American", 
+            "gpa": 3.8, 
+            "gre_total_score": 320, 
+            "gre_verbal_score": 160, 
+            "gre_aw_score": 4.5, 
+            "degree": "PhD", 
+            "llm_generated_program": "Computer Science", 
+            "llm_generated_university": "MIT", 
+        } 
     ]
+

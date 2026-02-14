@@ -167,29 +167,29 @@ Grad School Café Data Analysis
 
 <!-- Q2 -->
 <div class="question">What percentage of entries are from International students (not American or Other)?</div>
-<div class="answer"><em>Answer: <strong>Percent International:</strong> {{ results.pct_international | pct }}%</em></div>
+<div class="answer"><em>Answer: <strong>Percent International:</strong> {{ pct(results.pct_international) }}%</em></div>
 
 <!-- Q3 -->
 <div class="question">What is the average GPA, GRE, GRE V, and GRE AW of applicants who provided these metrics?</div>
 <div class="answer">
     <em>Answer:
-    <strong>Average GPA:</strong> {{ results.avg_metrics[0] | na }},
-    <strong>Average GRE:</strong> {{ results.avg_metrics[1] | na }},
-    <strong>Average GRE V:</strong> {{ results.avg_metrics[2] | na }},
-    <strong>Average GRE AW:</strong> {{ results.avg_metrics[3] | na }}</em>
+    <strong>Average GPA:</strong> {{ fmt(results.avg_metrics[0]) }},
+    <strong>Average GRE:</strong> {{ fmt(results.avg_metrics[1]) }},
+    <strong>Average GRE V:</strong> {{ fmt(results.avg_metrics[2]) }},
+    <strong>Average GRE AW:</strong> {{ fmt(results.avg_metrics[3]) }}</em>
 </div>
 
 <!-- Q4 -->
 <div class="question">What is the average GPA of American students in Fall 2026?</div>
-<div class="answer"><em>Answer: <strong>Average GPA American:</strong> {{ results.avg_gpa_american | na }}</em></div>
+<div class="answer"><em>Answer: <strong>Average GPA American:</strong> {{ fmt(results.avg_gpa_american) }}</em></div>
 
 <!-- Q5 -->
 <div class="question">What percent of entries for Fall 2026 are Acceptances?</div>
-<div class="answer"><em>Answer: <strong>Acceptance percent:</strong> {{ results.pct_accept_fall_2026 | pct }}%</em></div>
+<div class="answer"><em>Answer: <strong>Acceptance percent:</strong> {{ pct(results.pct_accept_fall_2026) }}%</em></div>
 
 <!-- Q6 -->
 <div class="question">What is the average GPA of Fall 2026 Acceptances?</div>
-<div class="answer"><em>Answer: <strong>Average GPA Acceptance:</strong> {{ results.avg_gpa_accept_fall_2026 | na }}</em></div>
+<div class="answer"><em>Answer: <strong>Average GPA Acceptance:</strong> {{ fmt(results.avg_gpa_accept_fall_2026) }}</em></div>
 
 <!-- Q7 -->
 <div class="question">How many entries applied to JHU for a Masters in CS?</div>

@@ -18,7 +18,7 @@ def test_run_py_imports(mock_create_app):
     mock_create_app.return_value = mock_app
     
     # Import run.py
-    import src.run as run_module
+    from src import run as run_module
     
     # Should have created an app
     assert run_module.app is not None

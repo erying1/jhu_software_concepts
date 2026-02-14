@@ -52,10 +52,12 @@ def test_check_robots_disallowed(mock_robot_parser):
 @patch('time.sleep')
 def test_get_html_success(mock_sleep, mock_get_opener):
     """Test HTML fetching succeeds"""
-    mock_response = Mock()
+    from unittest.mock import MagicMock
+    
+    mock_response = MagicMock()
     mock_response.read.return_value = b"<html>Test</html>"
     
-    mock_opener = Mock()
+    mock_opener = MagicMock()
     mock_opener.open.return_value.__enter__.return_value = mock_response
     mock_get_opener.return_value = mock_opener
     

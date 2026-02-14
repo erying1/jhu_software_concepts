@@ -34,8 +34,16 @@ import psycopg
 import argparse
 
 import os 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
-DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "llm_extend_applicant_data.json")
+try: 
+    PROJECT_ROOT = Path(__file__).resolve().parents[2] 
+except NameError: 
+    PROJECT_ROOT = Path.cwd()
+
+DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "llm_extend_applicant_data.json"
+
+#BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) 
+#DATA_FILE = os.path.join(BASE_DIR, "module_2.1", "llm_extend_applicant_data.json")
+#DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "llm_extend_applicant_data.json")
 #DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "cleaned_data.json")
 
 
@@ -84,9 +92,9 @@ def create_table(conn):
             term TEXT,
             us_or_international TEXT,
             gpa FLOAT,
-            gre FLOAT,
-            gre_v FLOAT,
-            gre_aw FLOAT,
+            gre_total_score FLOAT,
+            gre_verbal_score FLOAT,
+            gre_aw_score FLOAT,
             degree TEXT,
             llm_generated_program TEXT,
             llm_generated_university TEXT
@@ -106,9 +114,9 @@ def normalize_record(raw):
         "term": raw.get("term"),
         "us_or_international": raw.get("citizenship"),
         "gpa": raw.get("gpa"),
-        "gre": raw.get("gre_total"),
-        "gre_v": raw.get("gre_v"),
-        "gre_aw": raw.get("gre_aw"),
+        "gre_total_score": raw.get("gre_total"),
+        "gre_verbal_score": raw.get("gre_v"),
+        "gre_aw_score": raw.get("gre_aw"),
         "degree": raw.get("degree_level"),
         "llm_generated_program": raw.get("llm_generated_program") or raw.get("llm-generated-program"),
         "llm_generated_university": raw.get("llm_generated_university") or raw.get("llm-generated-university"),
@@ -157,12 +165,12 @@ def insert_record(conn, record):
             """ 
             INSERT INTO applicants (
                 program, comments, date_added, url, status, status_date, term,
-                us_or_international, gpa, gre, gre_v, gre_aw, degree,
+                us_or_international, gpa, gre_total_score, gre_verbal_score, gre_aw_score, degree,
                 llm_generated_program, llm_generated_university
             )
             VALUES (
                 %(program)s, %(comments)s, %(date_added)s, %(url)s, %(status)s, %(status_date)s, %(term)s,
-                %(us_or_international)s, %(gpa)s, %(gre)s, %(gre_v)s, %(gre_aw)s, %(degree)s,
+                %(us_or_international)s, %(gpa)s, %(gre_total_score)s, %(gre_verbal_score)s, %(gre_aw_score)s, %(degree)s,
                 %(llm_generated_program)s, %(llm_generated_university)s
           )
             ON CONFLICT (url) DO NOTHING; 
@@ -201,14 +209,19 @@ def load_into_db(filepath: str):
 # ----------------------------- 
 # # CLI entrypoint 
 # # ----------------------------- 
-if __name__ == "__main__": 
+if __name__ == "__main__":   # pragma: no cover
+    import sys
     parser = argparse.ArgumentParser(description="Load applicant data into PostgreSQL.") 
+    
     parser.add_argument( 
         "--drop", 
         action="store_true", 
         help="Drop and recreate the studentCourses database before loading." 
     ) 
     args = parser.parse_args() 
+
+    if len(sys.argv) == 1: 
+        raise SystemExit()
     
     try: 
         if args.drop: 
@@ -218,3 +231,4 @@ if __name__ == "__main__":
     
     except Exception as e: 
         print(f"Error: {e}")
+
