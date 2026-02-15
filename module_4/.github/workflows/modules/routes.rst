@@ -1,7 +1,9 @@
-Flask Routes
-============
+Flask Routes Module
+===================
 
-.. automodule:: app.routes
+The routes module defines the Flask web application endpoints.
+
+.. automodule:: src.app.routes
    :members:
    :undoc-members:
    :show-inheritance:

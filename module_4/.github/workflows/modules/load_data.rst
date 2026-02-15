@@ -1,7 +1,9 @@
 Load Data Module
 ================
 
-.. automodule:: load_data
+The load_data module handles loading cleaned data into PostgreSQL.
+
+.. automodule:: src.load_data
    :members:
    :undoc-members:
    :show-inheritance:
