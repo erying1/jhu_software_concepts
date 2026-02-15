@@ -1,6 +1,7 @@
 ﻿# Read the Docs configuration file
 # See https://docs.readthedocs.io/en/stable/config-file/v2.html
 
+
 version: 2
 
 build:
@@ -16,9 +17,3 @@ python:
   install:
     - requirements: requirements.txt
     - requirements: module_4/docs/requirements.txt
-```
-
-### **2. Create `module_4/docs/requirements.txt`:**
-```
-sphinx-rtd-theme
-sphinx-autobuild
