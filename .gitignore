@@ -3,3 +3,4 @@ backup/
 *.zip
 *.gguf
 status.txt
+module_4/tests/test_final_coverage_push.py
