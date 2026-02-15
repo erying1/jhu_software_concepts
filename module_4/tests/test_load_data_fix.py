@@ -27,3 +27,19 @@ def test_load_json_lines_39_40():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+@pytest.mark.db
+def test_load_json_real_open(tmp_path):
+    """Covers the real open() path in load_json."""
+    from src.load_data import load_json
+
+    file = tmp_path / "data.json"
+    file.write_text('[{"a": 1}]')
+
+    result = load_json(str(file))
+    assert result == [{"a": 1}]
+
+@pytest.mark.db
+def test_main_returns_expected_value():
+    from src.load_data import main
+    assert main() == "load_data_main_executed"

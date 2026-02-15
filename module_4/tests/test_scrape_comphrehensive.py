@@ -5,6 +5,9 @@ import pytest
 from unittest.mock import Mock, patch
 from bs4 import BeautifulSoup
 
+from src.module_2_1.scrape import parse_detail_page_html
+
+
 
 # =============================================================================
 # Line 53: Return str(data) path in get_html
@@ -54,7 +57,6 @@ def test_parse_detail_gpa_exception_handling():
 @pytest.mark.db
 def test_parse_detail_american_citizenship():
     """Lines 138-139: Detect American/Domestic citizenship"""
-    from src.module_2_1.scrape import parse_detail_page_html
     
     with patch('src.module_2_1.scrape._get_html') as mock_get:
         # Test "american"
@@ -270,6 +272,99 @@ def test_scrape_data_sample_printing():
             # Should have collected entries
             assert len(result) > 0
 
+
+def test_parse_detail_gpa_exception(monkeypatch):
+    from src.module_2_1.scrape import parse_detail_page_html
+
+    html = "<div>GPA: not_a_number</div>"
+
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: html
+    )
+
+    result = parse_detail_page_html('http://test.com', base_url='http://test.com')
+    assert result["gpa"] is None
+
+
+def test_parse_detail_gre_v_exception(monkeypatch):
+    from src.module_2_1.scrape import parse_detail_page_html
+
+    html = "<div>GRE V: abc</div>"
+
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: html
+    )
+
+    result = parse_detail_page_html('http://test.com', base_url='http://test.com')
+    assert result["gre_v"] is None
+
+
+def test_parse_detail_gre_q_exception(monkeypatch):
+    from src.module_2_1.scrape import parse_detail_page_html
+
+    html = "<div>GRE Q: xyz</div>"
+
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: html
+    )
+
+    result = parse_detail_page_html('http://test.com', base_url='http://test.com')
+    assert result["gre_q"] is None
+
+def test_parse_detail_gre_aw_exception(monkeypatch):
+    from src.module_2_1.scrape import parse_detail_page_html
+
+    html = "<div>GRE AW: nope</div>"
+
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: html
+    )
+
+    result = parse_detail_page_html('http://test.com', base_url='http://test.com')
+    assert result["gre_aw"] is None
+
+def test_scrape_data_outer_exception(monkeypatch):
+    from src.module_2_1.scrape import scrape_data
+
+    # Force _get_html to raise
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: (_ for _ in ()).throw(Exception("boom"))
+    )
+
+    result = scrape_data(max_entries=10, start_page=1)
+    assert result == []
+
+
+def test_scrape_data_break_no_rows(monkeypatch):
+    from src.module_2_1.scrape import scrape_data
+
+    # Return HTML with no <tr> rows
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: "<html><body><p>No rows</p></body></html>"
+    )
+
+    result = scrape_data(max_entries=10, start_page=1)
+    assert result == []
+
+def test_scrape_data_break_no_rows_html(monkeypatch):
+    from src.module_2_1.scrape import scrape_data
+
+    # HTML with <table> but no <tr> containing <td>
+    html = "<html><body><table><tr><th>Header</th></tr></table></body></html>"
+
+    monkeypatch.setattr(
+        "src.module_2_1.scrape._get_html",
+        lambda *a, **k: html
+    )
+
+    result = scrape_data(max_entries=10, start_page=1)
+    assert result == []
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

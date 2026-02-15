@@ -94,3 +94,77 @@ def test_load_scraped_records_valid(tmp_path, monkeypatch):
     data_file.write_text('[{"x": 1}]') 
     monkeypatch.setattr(routes, "PROJECT_ROOT", str(tmp_path)) 
     assert routes.load_scraped_records() == [{"x": 1}]
+
+@pytest.mark.web
+def test_analysis_exception_before_render(client, monkeypatch):
+    # Force load_scraped_records to raise
+    monkeypatch.setattr(routes, "load_scraped_records", lambda: (_ for _ in ()).throw(Exception("boom")))
+    response = client.get("/analysis")
+    assert response.status_code == 200
+
+@pytest.mark.buttons
+def test_pull_data_html_redirect(client, monkeypatch):
+    monkeypatch.setattr(routes, "pull_running", False)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: None)
+    response = client.post("/pull-data")  # no JSON
+    assert response.status_code in (302, 303)
+
+@pytest.mark.buttons
+def test_pull_data_subprocess_error(client, monkeypatch):
+    monkeypatch.setattr(routes, "pull_running", False)
+
+    def fake_run(*a, **k):
+        raise subprocess.CalledProcessError(1, "cmd")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    response = client.post("/pull-data", json={})
+    assert response.status_code == 500
+    assert response.json["ok"] is False
+
+@pytest.mark.buttons
+def test_pull_data_generic_exception(client, monkeypatch):
+    monkeypatch.setattr(routes, "pull_running", False)
+
+    def fake_run(*a, **k):
+        raise Exception("boom")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    response = client.post("/pull-data", json={})
+    assert response.status_code == 500
+    assert response.json["ok"] is False
+
+@pytest.mark.buttons
+def test_pull_data_timestamp_write_failure(client, monkeypatch, tmp_path):
+    monkeypatch.setattr(routes, "pull_running", False)
+    monkeypatch.setattr(subprocess, "run", lambda *a, **k: None)
+
+    # Force timestamp write to fail
+    monkeypatch.setattr(routes, "TIMESTAMP_FILE", str(tmp_path / "nope" / "file.txt"))
+    monkeypatch.setattr(routes, "RUNTIME_FILE", str(tmp_path / "nope" / "file2.txt"))
+
+    response = client.post("/pull-data", json={})
+    assert response.status_code == 200
+
+@pytest.mark.buttons
+def test_update_analysis_html_render(client, monkeypatch):
+    monkeypatch.setattr(routes, "pull_running", False)
+    monkeypatch.setattr(routes, "get_all_results", lambda: {"avg_metrics": {}})
+    monkeypatch.setattr(routes, "load_scraped_records", lambda: [])
+    monkeypatch.setattr(routes, "compute_scraper_diagnostics", lambda x: {})
+
+    response = client.post("/update-analysis")  # no JSON
+    assert response.status_code == 200
+
+@pytest.mark.web
+def test_status_exception(monkeypatch, client):
+    def boom():
+        raise Exception("fail")
+
+    monkeypatch.setattr(routes, "pull_running", property(boom))
+
+    response = client.get("/status")
+    assert response.status_code == 200
+    assert response.json["busy"] is False
+

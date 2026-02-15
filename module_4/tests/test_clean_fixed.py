@@ -170,3 +170,198 @@ def test_llm_clean_batch_empty_input():
     """Test LLM with empty input"""
     result = clean.llm_clean_batch([])
     assert result == []
+
+@pytest.mark.analysis
+def test_clean_data_empty_list():
+    from src.module_2_1 import clean
+    assert clean.clean_data([]) == []
+
+@pytest.mark.analysis
+def test_clean_data_save_data_failure(monkeypatch):
+    from src.module_2_1 import clean
+
+    # Force save_data to raise FileNotFoundError
+    monkeypatch.setattr(clean, "save_data", lambda *a, **k: (_ for _ in ()).throw(FileNotFoundError()))
+
+    raw = [{"program_name": "CS", "university": "MIT"}]
+
+    # Should still return cleaned records
+    result = clean.clean_data(raw)
+    assert len(result) == 1
+
+@pytest.mark.analysis
+def test_llm_clean_batch_missing_output(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Fake NamedTemporaryFile to control paths
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(tmp_path / "input.json")
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # Do NOT create the .out file → triggers exception
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    # Should return original records
+    assert result == records
+
+@pytest.mark.analysis
+def test_llm_clean_batch_cleanup_failure(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Create fake input and output files
+    input_file = tmp_path / "input.json"
+    output_file = tmp_path / "input.json.out"
+    input_file.write_text("[]")
+    output_file.write_text("{}")
+
+    # Fake NamedTemporaryFile to return our paths
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(input_file)
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # Force os.remove to fail
+    monkeypatch.setattr(clean.os, "remove", lambda *a, **k: (_ for _ in ()).throw(Exception("fail")))
+
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    # Should still return parsed output (empty list)
+    assert isinstance(result, list)
+
+@pytest.mark.analysis
+def test_llm_clean_batch_read_failure(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Create fake input file
+    input_file = tmp_path / "input.json"
+    input_file.write_text("[]")
+
+    # Fake NamedTemporaryFile to return our input path
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(input_file)
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # DO NOT create the .out file → triggers read failure
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    assert result == records
+
+@pytest.mark.analysis
+def test_llm_clean_batch_cleanup_exception(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Create fake input and output files
+    input_file = tmp_path / "input.json"
+    output_file = tmp_path / "input.json.out"
+    input_file.write_text("[]")
+    output_file.write_text('{"llm-generated-program": "X"}\n')
+
+    # Fake NamedTemporaryFile to return our input path
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(input_file)
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # Force os.remove to fail
+    monkeypatch.setattr(clean.os, "remove", lambda *a, **k: (_ for _ in ()).throw(Exception("fail")))
+
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    # Should still return parsed output
+    assert isinstance(result, list)
+    assert result[0]["llm-generated-program"] == "X"
+
+@pytest.mark.analysis
+def test_llm_clean_batch_read_failure(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Create fake input file
+    input_file = tmp_path / "input.json"
+    input_file.write_text("[]")
+
+    # Fake NamedTemporaryFile to return our input path
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(input_file)
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # DO NOT create the .out file → triggers read failure
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    assert result == records
+
+
+@pytest.mark.analysis
+def test_llm_clean_batch_cleanup_exception(monkeypatch, tmp_path):
+    from src.module_2_1 import clean
+
+    # Fake subprocess.run to succeed
+    monkeypatch.setattr(clean.subprocess, "run", lambda *a, **k: None)
+
+    # Create fake input and output files
+    input_file = tmp_path / "input.json"
+    output_file = tmp_path / "input.json.out"
+    input_file.write_text("[]")
+    output_file.write_text('{"llm-generated-program": "X"}\n')
+
+    # Fake NamedTemporaryFile to return our input path
+    class FakeTmp:
+        def __init__(self):
+            self.name = str(input_file)
+        def write(self, *a, **k): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): pass
+
+    monkeypatch.setattr(clean.tempfile, "NamedTemporaryFile", lambda *a, **k: FakeTmp())
+
+    # Force os.remove to fail
+    monkeypatch.setattr(clean.os, "remove", lambda *a, **k: (_ for _ in ()).throw(Exception("fail")))
+
+    records = [{"program_name": "CS", "university": "MIT"}]
+    result = clean.llm_clean_batch(records)
+
+    # Should still return parsed output
+    assert isinstance(result, list)
+    assert result[0]["llm-generated-program"] == "X"
