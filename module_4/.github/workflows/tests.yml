@@ -13,7 +13,7 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ********
+          POSTGRES_PASSWORD: Tolkien321
           POSTGRES_DB: studentCourses
         ports:
           - 5432:5432
