@@ -1,2 +1,16 @@
+# App dependencies
+flask
 beautifulsoup4==4.12.3
+
+# Testing dependencies
+pytest
+pytest-cov
+psycopg psycopg-binary
+anthropic
+
+# Documentation dependencies
+sphinx
+sphinx-rtd-theme
+sphinx-autobuild
+
 
