@@ -18,8 +18,6 @@ __pycache__/
 .Python
 
 # Coverage reports
-.coverage
-.coverage.*
 htmlcov/
 .pytest_cache/
 
