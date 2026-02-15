@@ -1,0 +1,60 @@
+module_2/llm_hosting/models/
+backup/
+*.zip
+*.gguf
+status.txt
+
+# Virtual Environment
+.venv/
+venv/
+env/
+ENV/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Coverage reports
+.coverage
+.coverage.*
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Database
+*.db
+*.sqlite3
+
+# Sphinx build
+docs/_build/
+docs/_static/
+docs/_templates/
+
+# Environment variables
+.env
+.env.local
+
+# Temporary files
+*.log
+*.tmp
+checkpoint.json
+detail_cache*.db
+
