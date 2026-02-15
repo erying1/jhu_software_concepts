@@ -243,8 +243,8 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
     return cleaned
 
 
-if __name__ == "__main__":   
-    # Example pipeline: load raw, clean, save file
+def main():
+    """Main pipeline: load raw, clean, save."""
     raw = load_data("module_3/module_2.1/raw_applicant_data.json")
     print(f"Loaded {len(raw)} rows from module_3/module_2.1/raw_applicant_data.json")
 
@@ -254,11 +254,16 @@ if __name__ == "__main__":
     save_data(cleaned, "module_3/module_2.1/llm_extend_applicant_data.json")
     print(f"Saved {len(cleaned)} rows after clean+LLM to module_3/module_2.1/llm_extend_applicant_data.json")
 
+
+if __name__ == "__main__":   
+    main()
+
 __all__ = [ 
     "clean_single_record", 
     "normalize_status", 
     "clean_data", 
     "save_data", 
     "load_data", 
-    "llm_clean_batch", 
+    "llm_clean_batch",
+    "main",
 ]

@@ -123,12 +123,9 @@ def _parse_detail_page_html(entry_url: str):
             if 'gpa' in text.lower() and not result['gpa']:
                 gpa_match = re.search(r'GPA[:\s]+(\d+\.?\d*)', text, re.I)
                 if gpa_match:
-                    try:
-                        gpa_val = float(gpa_match.group(1))
-                        if 0 < gpa_val <= 4.5:
-                            result['gpa'] = gpa_val
-                    except:
-                        pass
+                    gpa_val = float(gpa_match.group(1))
+                    if 0 < gpa_val <= 4.5:
+                        result['gpa'] = gpa_val
             
             # Citizenship
             if not result['citizenship']:
@@ -152,34 +149,25 @@ def _parse_detail_page_html(entry_url: str):
             if not result['gre_v']:
                 gre_v_match = re.search(r'(?:GRE\s+)?V(?:erbal)?[:\s]+(\d{3})', text, re.I)
                 if gre_v_match:
-                    try:
-                        val = int(gre_v_match.group(1))
-                        if 130 <= val <= 170:
-                            result['gre_v'] = val
-                    except:
-                        pass
+                    val = int(gre_v_match.group(1))
+                    if 130 <= val <= 170:
+                        result['gre_v'] = val
             
             # GRE Quant
             if not result['gre_q']:
                 gre_q_match = re.search(r'(?:GRE\s+)?Q(?:uant)?[:\s]+(\d{3})', text, re.I)
                 if gre_q_match:
-                    try:
-                        val = int(gre_q_match.group(1))
-                        if 130 <= val <= 170:
-                            result['gre_q'] = val
-                    except:
-                        pass
+                    val = int(gre_q_match.group(1))
+                    if 130 <= val <= 170:
+                        result['gre_q'] = val
             
             # GRE AW
             if not result['gre_aw']:
                 gre_aw_match = re.search(r'(?:GRE\s+)?(?:AW|Writing)[:\s]+(\d+\.?\d*)', text, re.I)
                 if gre_aw_match:
-                    try:
-                        val = float(gre_aw_match.group(1))
-                        if 0 <= val <= 6:
-                            result['gre_aw'] = val
-                    except:
-                        pass
+                    val = float(gre_aw_match.group(1))
+                    if 0 <= val <= 6:
+                        result['gre_aw'] = val
         
         # Calculate GRE total
         if result['gre_v'] and result['gre_q']:
@@ -456,5 +444,6 @@ __all__ = [
     "parse_detail_gre_total_calculation", 
     "parse_row", 
     "fetch_detail_batch", 
-    "scrape_data", 
+    "scrape_data",
+    "main",
 ]

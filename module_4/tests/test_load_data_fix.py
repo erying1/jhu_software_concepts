@@ -40,6 +40,7 @@ def test_load_json_real_open(tmp_path):
     assert result == [{"a": 1}]
 
 @pytest.mark.db
-def test_main_returns_expected_value():
-    from src.load_data import main
-    assert main() == "load_data_main_executed"
+def test_main_returns_expected_value(monkeypatch):
+    from src import load_data
+    monkeypatch.setattr(load_data, "load_into_db", lambda filepath: None)
+    assert load_data.main() == "load_data_main_executed"

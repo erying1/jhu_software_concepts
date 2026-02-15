@@ -87,22 +87,20 @@ def test_run_app_has_run_method():
 def test_load_data_main(monkeypatch): 
     from src import load_data 
     # Prevent actual DB operations 
-    monkeypatch.setattr(load_data, "reset_database", lambda: None) 
-    monkeypatch.setattr(load_data, "load_into_db", lambda records: None) 
-    
-    # Prevent file writes 
-    monkeypatch.setattr(load_data, "open", lambda *a, **k: open(os.devnull, "w")) 
+    monkeypatch.setattr(load_data, "reset_database", lambda dbname: None) 
+    monkeypatch.setattr(load_data, "load_into_db", lambda filepath: None) 
     
     # Call main directly 
-    load_data.main()
+    result = load_data.main()
+    assert result == "load_data_main_executed"
 
 
 # Test run.py
 @pytest.mark.web 
 def test_run_main_direct(monkeypatch): 
     import src.run as r 
-    monkeypatch.setattr(r, "_run_server", lambda: lambda *a, **k: None) 
-    r._run_server()
+    monkeypatch.setattr(r.app, "run", lambda **kwargs: None) 
+    r.main()
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

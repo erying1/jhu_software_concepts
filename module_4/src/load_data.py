@@ -35,10 +35,7 @@ import psycopg
 import argparse
 
 import os 
-try: 
-    PROJECT_ROOT = Path(__file__).resolve().parents[2] 
-except NameError: 
-    PROJECT_ROOT = Path.cwd()
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 
@@ -51,10 +48,6 @@ DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "llm_extend_applicant_dat
 
 
 
-def _run_main(): 
-    """Coverage-safe wrapper for main execution.""" 
-    # Do NOT actually run the full CLI during tests 
-    return "load_data_run_main_executed"
 
 # -----------------------------
 # Load JSON from disk
@@ -213,40 +206,27 @@ def load_into_db(filepath: str):
     finally:
         conn.close()
 
-def main(): 
-    """Coverage-safe entrypoint for load_data.""" 
+def main(drop=False): 
+    """CLI entrypoint for load_data.""" 
     try: 
-        # Call your real logic here if needed 
-        return "load_data_main_executed" 
+        if drop: 
+            reset_database("studentCourses") 
+        load_into_db(DATA_FILE)
+        return "load_data_main_executed"
     except Exception as e: 
+        print(f"Error: {e}")
         return f"error: {e}"
 
-def _run_main():
-    return "load_data_run_main_executed"
-
 # ----------------------------- 
-# # CLI entrypoint 
-# # ----------------------------- 
+# CLI entrypoint 
+# ----------------------------- 
 if __name__ == "__main__":   
-    import sys
     parser = argparse.ArgumentParser(description="Load applicant data into PostgreSQL.") 
-    
     parser.add_argument( 
         "--drop", 
         action="store_true", 
         help="Drop and recreate the studentCourses database before loading." 
     ) 
     args = parser.parse_args() 
-
-    if len(sys.argv) == 1: 
-        raise SystemExit()
-    
-    try: 
-        if args.drop: 
-            reset_database("studentCourses") 
-            
-        load_into_db(DATA_FILE) 
-    
-    except Exception as e: 
-        print(f"Error: {e}")
+    main(drop=args.drop)
 

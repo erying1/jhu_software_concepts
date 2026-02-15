@@ -21,6 +21,7 @@ import subprocess
 from .queries import get_all_results, compute_scraper_diagnostics
 import json
 from pathlib import Path 
+from collections import defaultdict
 from datetime import datetime
 
 
@@ -74,47 +75,38 @@ def na(val):
 @bp.route("/analysis") 
 def analysis(): 
     # Safe fallback structure for template rendering 
-    EMPTY_RESULTS = {
-        "avg_metrics": {}, 
-        "pct_international": "N/A", 
-        "pct_accept": "N/A", 
-        "avg_gpa": "N/A", 
-        "counts": {}, 
+    # Initialize defaults BEFORE try block
+    results = {
+        "avg_metrics": defaultdict(lambda: None),
+        "pct_international": "N/A",
+        "pct_accept": "N/A",
+        "avg_gpa": "N/A",
+        "counts": defaultdict(lambda: None),
     }
 
-    results = EMPTY_RESULTS.copy()
     scraper_diag = {}
+    records = []
 
     try: 
         records = load_scraped_records() 
         results = get_all_results() 
-        if isinstance(results, list): 
-            results = {} 
-        scraper_diag = compute_scraper_diagnostics(records) 
-        return render_template( 
-            "analysis.html", 
-            results=results, 
-            scraper_diag=scraper_diag, 
-            pull_running=pull_running,
-            last_data_pull=get_last_pull(), 
-            last_runtime=get_last_runtime(),
-            fmt=fmt,
-            pct=pct,
-            na=na,
-        )
-    except Exception: 
-        # REQUIRED BY TEST LINE 164 
-        return render_template( 
-            "analysis.html", 
-            results=results,
-            scraper_diag=scraper_diag,
-            pull_running=pull_running, 
-            last_data_pull=get_last_pull(), 
-            last_runtime=get_last_runtime(),
-            fmt=fmt,
-            pct=pct,
-            na=na,
-        )
+        scraper_diag = compute_scraper_diagnostics(records)
+    except Exception:
+        # Variables have default values from above, just log
+        pass
+    
+    return render_template( 
+        "analysis.html", 
+        results=results, 
+        scraper_diag=scraper_diag, 
+        pull_running=pull_running,
+        last_data_pull=get_last_pull(), 
+        last_runtime=get_last_runtime(),
+        fmt=fmt,
+        pct=pct,
+        na=na,
+    )
+    
 
 @bp.route("/pull-data", methods=["POST"])
 def pull_data():
@@ -127,25 +119,27 @@ def pull_data():
             return jsonify({"busy": True, "message": "A data pull is already running."}), 409
         flash("A data pull is already running.")
         return redirect(url_for("main.analysis"))
-
-    pull_running = True
-    start_time = datetime.now()
+    
+    #Initialize defaults
     last_data_pull = "N/A" 
     runtime_str = "N/A"
-
+       
     try:        
-        # Run scraper 
-        SCRAPER = os.path.join(PROJECT_ROOT, "module_3", "module_2.1", "scrape.py") 
+        pull_running = True
+        start_time = datetime.now()
+
+      # Run scraper 
+        SCRAPER = os.path.join(PROJECT_ROOT, "module_4", "src", "module_2.1", "scrape.py") 
         subprocess.run(["python", SCRAPER], check=True, cwd=PROJECT_ROOT) 
         
         last_data_pull = datetime.now().strftime("%b %d, %Y %I:%M %p") 
         
         # Run cleaner 
-        CLEANER = os.path.join(PROJECT_ROOT, "module_3", "module_2.1", "clean.py") 
+        CLEANER = os.path.join(PROJECT_ROOT, "module_4", "src", "module_2.1", "scrape.py") 
         subprocess.run(["python", CLEANER], check=True, cwd=PROJECT_ROOT) 
         
         # Load cleaned data into PostgreSQL
-        LOADER = os.path.join(PROJECT_ROOT, "module_3", "load_data.py") 
+        LOADER = os.path.join(PROJECT_ROOT, "module_4", "src", "load_data.py") 
         subprocess.run(["python", LOADER, "--drop"], check=False, cwd=PROJECT_ROOT) 
         
         subprocess.run(["echo", "extra"], check=False)
@@ -199,9 +193,8 @@ def update_analysis():
 
     # Check if pull is running
     if pull_running:
-        if request.is_json or request.accept_mimetypes.accept_json:
-            return jsonify({"busy": True, "message": "Cannot update analysis while data pull is running."}), 409
-        flash("Cannot update analysis while data pull is running.")
+        if request.accept_mimetypes.accept_json:
+            return jsonify({"busy": True}), 409
         return redirect(url_for("main.analysis"))
 
     # Get fresh results
