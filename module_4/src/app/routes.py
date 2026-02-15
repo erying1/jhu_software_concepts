@@ -244,7 +244,6 @@ def update_analysis():
         na=na,
     )
 
-
 @bp.route("/status")
 def status():
     """Check if system is busy."""
