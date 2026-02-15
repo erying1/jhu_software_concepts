@@ -30,10 +30,20 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
+USER_AGENT = "jhu-module2-scraper"
+
+# Reuse a single HTTP connection for all requests
+OPENER = request.build_opener()
+OPENER.addheaders = [("User-Agent", USER_AGENT)]
+
 BASE_URL = "https://www.thegradcafe.com/"
 SEARCH_URL = "https://www.thegradcafe.com/survey/"
 
-USER_AGENT = "jhu-module2-scraper"
+import shelve 
+DETAIL_CACHE = shelve.open("detail_cache.db")
+
+import sys 
+IS_FLASK = not sys.stdin.isatty()
 
 # Define a function to check robots.txt
 def check_robots(): 
@@ -47,15 +57,14 @@ def check_robots():
     return allowed
 
 # Private helper to fetch HTML content
-def _get_html(url: str) -> str:
-    """_get_html(): private helper to fetch HTML using urllib."""
-    req = request.Request(url, headers={"User-Agent": USER_AGENT})
-    with request.urlopen(req) as resp:
+def _get_html(url: str) -> str: 
+    """_get_html(): private helper to fetch HTML using a persistent opener.""" 
+    with OPENER.open(url) as resp: 
         return resp.read().decode("utf-8", errors="ignore")
 
 # Private helper to parse a table row into a dict
 def _parse_row(tr, base_entry_url: str):
-    tds = tr.find_all("td")
+    tds = tr.find_all("td", recursive=False)
     if len(tds) < 5:
         return None
 
@@ -64,14 +73,13 @@ def _parse_row(tr, base_entry_url: str):
     university = uni_div.get_text(strip=True) if uni_div else None
 
     # --- Program + Degree ---
-    program = None
-    degree_level = None
+    program = degree_level = None
     prog_div = tds[1].find("div")
     if prog_div:
         spans = prog_div.find_all("span")
-        if len(spans) >= 1:
-            program = spans[0].get_text(strip=True)
-        if len(spans) >= 2:
+        if spans: 
+            program = spans[0].get_text(strip=True) 
+        if len(spans) > 1: 
             degree_level = spans[1].get_text(strip=True)
 
     # --- Date Added ---
@@ -79,9 +87,7 @@ def _parse_row(tr, base_entry_url: str):
 
     # --- Status + Status Date ---
     status_block = tds[3].get_text(" ", strip=True)
-    # Example: "Rejected on 26 Jan"
-    status = None
-    status_date = None
+    status = status_date = None
     m = re.match(r"(Accepted|Rejected|Interview|Wait listed)\s+on\s+(.+)", status_block, re.I)
     if m:
         status = m.group(1).title()
@@ -91,36 +97,76 @@ def _parse_row(tr, base_entry_url: str):
     link = tds[4].find("a", href=True)
     entry_url = urljoin(base_entry_url, link["href"]) if link else None
 
-    # Sets the nominal value to None if not available, as per requirements
-    # Defined as per requirements in the assignment page for module 2
-    return {
-        "program_name": program,
-        "university": university,
-        "comments": None,          # not available on list page
-        "date_added": date_added,
-        "entry_url": entry_url,
-        "status": status,
-        "status_date": status_date,
-        "term": None,              # not available on list page
-        "citizenship": None,       # not available on list page
-        "gre_total": None,         # not available on list page
-        "gre_v": None,
-        "degree_level": degree_level,
-        "gpa": None,
-        "gre_aw": None,
+    # Base record from list view 
+    record = { 
+        "program_name": program, 
+        "university": university, 
+        "date_added": date_added, 
+        "entry_url": entry_url, 
+        "status": status, 
+        "status_date": status_date, 
+        "degree_level": degree_level, 
+        "comments": None, 
+        "term": None, 
+        "citizenship": None, 
+        "gpa": None, 
+        "gre_total": None, 
+        "gre_v": None, 
+        "gre_aw": None, 
+    } 
+
+    # To address module 2 feedback
+    detail = _parse_detail_page(entry_url) 
+    record.update(detail)
+
+    return record
+
+def _parse_detail_page(entry_url): 
+    if not entry_url: 
+        return { 
+            "comments": None, 
+            "term": None, 
+            "citizenship": None, 
+            "gpa": None, 
+            "gre_total": None, 
+            "gre_v": None, 
+            "gre_aw": None, 
+        } 
+    # Extract numeric ID from URL 
+    m = re.search(r"/result/(\d+)", entry_url) 
+    if not m: 
+        return {} 
+    
+    result_id = m.group(1) 
+    api_url = f"https://www.thegradcafe.com/api/result/{result_id}" 
+    
+    try: 
+        with OPENER.open(api_url) as resp: 
+            data = json.loads(resp.read().decode("utf-8")) 
+    except Exception: 
+        return {} 
+    
+    return { 
+        "comments": data.get("comments"), 
+        "term": data.get("term"), 
+        "citizenship": data.get("citizenship"), 
+        "gpa": data.get("gpa"), 
+        "gre_total": data.get("gre_total"), 
+        "gre_v": data.get("gre_v"), 
+        "gre_aw": data.get("gre_aw"), 
     }
 
 # Main scraping function
 # Running this script will scrape and save data to raw_applicant_data.json
 
-def scrape_data(max_entries: int = 30000):
+def scrape_data(max_entries: int = 30000, start_page: int = 1):
     """
     scrape_data(): pulls data from Grad Cafe.
     Returns a list of raw applicant dicts.
     Includes error checking for HTTP and URL errors.
     """
     all_entries = []
-    page = 1
+    page = start_page
 
     while len(all_entries) < max_entries:
         params = {"page": page}
@@ -138,12 +184,9 @@ def scrape_data(max_entries: int = 30000):
         soup = BeautifulSoup(html, "html.parser")
 
         # Refer to GradCafe’s HTML to find the correct table selector.
-        table = soup.find("table")
-        if not table:
-            print(f"No table found on page {page}, stopping.")
-            break
+        rows = soup.select("table tr")
+        rows = [tr for tr in rows if tr.find("td")]
 
-        rows = table.find_all("tr")
         new_count = 0
         for tr in rows:
             entry = _parse_row(tr, url)
@@ -156,8 +199,16 @@ def scrape_data(max_entries: int = 30000):
             break
 
         print(f"Page {page}: collected {new_count} entries (total {len(all_entries)})")
+        print(f"Estimated progress: {len(all_entries)}/{max_entries}")
         page += 1
-        time.sleep(1)  # be polite
+        time.sleep(0.1)  # be polite
+        if page % 10 == 0: 
+            with open("checkpoint.json", "w") as f: 
+                json.dump(all_entries, f)
+
+    print("Scrape complete.") 
+    print(f"Total entries collected: {len(all_entries)}") 
+    print(f"Detail pages cached: {len(DETAIL_CACHE)}")
 
     return all_entries[:max_entries]
 
@@ -171,8 +222,8 @@ if __name__ == "__main__":
 
     # update later to 30000 once verified to save time.  Initially use 500 to increase cycles of learning 
     # to validate
-    data = scrape_data(max_entries=1000)  # Updated to 40000 per Liv's instruction in the class video, i.e., > 30K for upcoming weeks' assignments for proper stats
+    data = scrape_data(max_entries=2000)  # Updated to 40000 per Liv's instruction in the class video, i.e., > 30K for upcoming weeks' assignments for proper stats
     
     # Raw data can be saved or passed to clean_data() in clean.py
-    with open("raw_applicant_data.json", "w", encoding="utf-8") as f:
+    with open("module_2/llm_extend_applicant_data.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)

@@ -243,7 +243,7 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
     return cleaned
 
 
-if __name__ == "__main__":   # pragma: no cover
+if __name__ == "__main__":   
     # Example pipeline: load raw, clean, save file
     raw = load_data("module_3/module_2.1/raw_applicant_data.json")
     print(f"Loaded {len(raw)} rows from module_3/module_2.1/raw_applicant_data.json")

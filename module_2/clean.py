@@ -32,6 +32,8 @@ import subprocess
 import tempfile
 import os
 
+import sys 
+PYTHON = sys.executable
 
 def _normalize_status(status: str | None) -> str | None:
     if not status:
@@ -50,21 +52,57 @@ def _clean_single_record(rec: Dict) -> Dict:
     """Normalize one record."""
     rec = dict(rec)  # shallow copy
 
+    # --- Normalize status ---
     rec["status"] = _normalize_status(rec.get("status"))
 
-    # Ensure missing values are None
-    for key in [
-        "program_name", "university", "comments", "date_added", "entry_url",
-        "status_date", "term", "citizenship", "degree_level"
-    ]:
-        if not rec.get(key):
-            rec[key] = None
+    # --- Normalize text fields ---
+    text_fields = [
+        "program_name", "university", "comments", "date_added",
+        "entry_url", "status_date", "term", "citizenship",
+        "degree_level"
+    ]
 
-    # Strip HTML remnants if any slipped through
+    for key in text_fields:
+        val = rec.get(key)
+        if not val or str(val).strip() == "":
+            rec[key] = None
+        else:
+            rec[key] = str(val).strip()
+
+    # --- Strip HTML from comments ---
     if rec["comments"]:
         rec["comments"] = re.sub(r"<[^>]+>", "", rec["comments"]).strip()
 
+    # --- Normalize numeric fields ---
+    def to_float(x):
+        try:
+            return float(x)
+        except:
+            return None
+
+    def to_int(x):
+        try:
+            return int(x)
+        except:
+            return None
+
+    rec["gpa"] = to_float(rec.get("gpa"))
+    rec["gre_total"] = to_int(rec.get("gre_total"))
+    rec["gre_v"] = to_int(rec.get("gre_v"))
+    rec["gre_aw"] = to_float(rec.get("gre_aw"))
+
+    # --- Normalize citizenship ---
+    if rec["citizenship"]:
+        c = rec["citizenship"].lower()
+        if "american" in c:
+            rec["citizenship"] = "American"
+        elif "international" in c:
+            rec["citizenship"] = "International"
+        else:
+            rec["citizenship"] = "Other"
+
     return rec
+
 
 
 def clean_data(raw_records: List[Dict]) -> List[Dict]:
@@ -132,11 +170,12 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
     tmp_out_path = tmp_in_path + ".out"
 
     cmd = [
-        "python",
-        "llm_hosting/app.py",
-        "--file", tmp_in_path,
-        "--out", tmp_out_path
-    ]
+    PYTHON,
+    "llm_hosting/app.py",
+    "--file", tmp_in_path,
+    "--out", tmp_out_path
+   ]
+
 
     try:
         subprocess.run(cmd, check=True)
@@ -168,10 +207,12 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
 
 if __name__ == "__main__":
     # Example pipeline: load raw, clean, save file
-    raw = load_data("raw_applicant_data.json")
+    raw = load_data("module_2/raw_applicant_data.json")
+    print(f"Loaded {len(raw)} rows from module_2/raw_applicant_data.json")
 
     # Clean the data: basic and LLM
     cleaned = clean_data(raw)
 
-    save_data(cleaned, "llm_extend_applicant_data.json")
+    save_data(cleaned, "module_2/llm_extend_applicant_data.json")
+    print(f"Saved {len(cleaned)} rows after clean+LLM to module_2/llm_extend_applicant_data.json")
 

@@ -216,6 +216,48 @@ class TestAdditionalCoverage:
         response = client.post('/pull-data')
         assert response.status_code in [200, 302, 500]
 
+###########################################
+## Test __init__.py - Lines 39-42, 46-50
+###########################################
+
+# Lines 39-42
+@pytest.mark.analysis 
+def test_create_app_applies_test_config(): 
+    from src.app import create_app 
+    app = create_app({"SECRET_KEY": "override", "TESTING": True}) 
+    assert app.config["SECRET_KEY"] == "override" 
+    assert app.config["TESTING"] is True
+
+# Lines 46-50
+@pytest.mark.analysis 
+def test_create_app_pytest_env_override(monkeypatch): 
+    from src.app import create_app 
+
+    # Simulate pytest environment variable
+    monkeypatch.setenv("PYTEST_CURRENT_TEST", "true") 
+    
+    app = create_app() 
+    assert app.config["TESTING"] is True
+
+import pytest
+import os
+
+@pytest.mark.analysis
+def test_create_app_all_branches(monkeypatch):
+    from src.app import create_app
+
+    # Hit the PYTEST_CURRENT_TEST branch
+    monkeypatch.setenv("PYTEST_CURRENT_TEST", "true")
+
+    # Hit the config-provided branch
+    app = create_app({"DEBUG": True})
+
+    assert app.config["DEBUG"] is True
+    assert app.config["TESTING"] is True  # set by env var
+
+    # Hit the no-config branch
+    app2 = create_app()
+    assert app2.config["TESTING"] is True
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--cov=src", "--cov-report=term-missing"])

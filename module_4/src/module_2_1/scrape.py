@@ -47,10 +47,14 @@ def get_html(url, opener=None, delay=0.1):
     if opener is not None: 
         try: 
             resp = opener.open(url, timeout=10) 
-            return resp.read().decode("utf-8", errors="ignore") 
+            data = resp.read() 
+            if isinstance(data, bytes): 
+                return data.decode("utf-8", errors="ignore") 
+            return str(data) 
         except Exception: 
             return None 
     return _get_html(url, delay)
+
 
 
 def _get_html(url: str, delay: float = 0.1) -> str:
@@ -431,7 +435,7 @@ def main():
     print(f"\n✓ Saved {len(data)} entries to {output_file}")
 
 
-if __name__ == "__main__":   # pragma: no cover
+if __name__ == "__main__":   
     try:
         start_time = datetime.now()
         main()

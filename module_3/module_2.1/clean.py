@@ -32,7 +32,9 @@ import subprocess
 import tempfile
 import os
 
-import sys 
+import sys
+
+from anyio import Path 
 PYTHON = sys.executable
 
 def _normalize_status(status: str | None) -> str | None:
@@ -142,6 +144,9 @@ def clean_data(raw_records: List[Dict]) -> List[Dict]:
     print("Running LLM batch...")
     cleaned_LLM_output = llm_clean_batch(batch_input) 
     
+    if not cleaned_LLM_output: 
+        cleaned_LLM_output = cleaned_basic  # fallback to original if LLM fails
+
     # 5. Merge LLM results back into cleaned_basic 
     print("Merging LLM results back into records...") 
     total = len(cleaned_basic)
@@ -226,15 +231,24 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
 
     return cleaned
 
+if __name__ == "__main__": 
+    try: 
+        # Use namespace-injected functions if present 
+        ld = locals().get("load_data") or globals().get("load_data") 
+        cd = locals().get("clean_data") or globals().get("clean_data") 
+        sd = locals().get("save_data") or globals().get("save_data")
 
-if __name__ == "__main__":
-    # Example pipeline: load raw, clean, save file
-    raw = load_data("module_3/module_2.1/raw_applicant_data.json")
-    print(f"Loaded {len(raw)} rows from module_3/module_2.1/raw_applicant_data.json")
+        PROJECT_ROOT = Path(__file__).resolve().parents[2] 
+        DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "raw_applicant_data.json"
+        raw = ld(DATA_FILE) 
+        print(f"Loaded {len(raw)} rows...") 
 
-    # Clean the data: basic and LLM
-    cleaned = clean_data(raw)
+        cleaned = cd(raw) 
 
-    save_data(cleaned, "module_3/module_2.1/llm_extend_applicant_data.json")
-    print(f"Saved {len(cleaned)} rows after clean+LLM to module_3/module_2.1/llm_extend_applicant_data.json")
+        DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "llm_extend_applicant_data.json"
+        sd(cleaned, DATA_FILE) 
+        print(f"Saved {len(cleaned)} rows after clean+LLM to module_3/module_2.1/llm_extend_applicant_data.json") 
+    
+    except Exception as e: 
+        print(f"Error in clean.py main block: {e}")
 
