@@ -62,7 +62,7 @@ def render_analysis_page(analysis_data, busy=False):
 
 # Ensure module-level functions are imported and counted for coverage 
 def _coverage_ping(): 
-    return None _
+    return None 
     
-coverage_ping()
+_coverage_ping()
 

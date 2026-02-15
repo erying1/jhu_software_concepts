@@ -255,7 +255,7 @@ def main():
     print(f"Saved {len(cleaned)} rows after clean+LLM to module_3/module_2.1/llm_extend_applicant_data.json")
 
 
-if __name__ == "__main__":   
+if __name__ == "__main__":     # pragma: no cover
     main()
 
 __all__ = [ 

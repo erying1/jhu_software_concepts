@@ -220,7 +220,7 @@ def main(drop=False):
 # ----------------------------- 
 # CLI entrypoint 
 # ----------------------------- 
-if __name__ == "__main__":   
+if __name__ == "__main__":     # pragma: no cover
     parser = argparse.ArgumentParser(description="Load applicant data into PostgreSQL.") 
     parser.add_argument( 
         "--drop", 
