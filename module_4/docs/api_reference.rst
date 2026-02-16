@@ -3,31 +3,58 @@ API Reference
 
 This section provides API documentation for the main Python modules in the project.
 
-Flask Routes
-------------
+Scraper (``scrape.py``)
+-----------------------
+
+.. automodule:: src.module_2_1.scrape
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Cleaner (``clean.py``)
+----------------------
+
+.. automodule:: src.module_2_1.clean
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Data Loader (``load_data.py``)
+------------------------------
+
+.. automodule:: src.load_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Analysis Queries (``query_data.py``)
+------------------------------------
+
+.. automodule:: src.query_data
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Flask Routes (``routes.py``)
+----------------------------
 
 .. automodule:: src.app.routes
    :members:
    :undoc-members:
    :show-inheritance:
 
-Query Functions (Dashboard)
----------------------------
+Dashboard Queries (``queries.py``)
+----------------------------------
 
 .. automodule:: src.app.queries
    :members:
    :undoc-members:
+   :show-inheritance:
 
-Database Query Layer
---------------------
+HTML Helpers (``pages.py``)
+---------------------------
 
-.. automodule:: src.query_data
+.. automodule:: src.app.pages
    :members:
    :undoc-members:
-
-Data Loading Utilities
-----------------------
-
-.. automodule:: src.load_data
-   :members:
-   :undoc-members:
+   :show-inheritance:
