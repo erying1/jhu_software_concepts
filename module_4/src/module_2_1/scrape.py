@@ -32,7 +32,14 @@ SEARCH_URL = "https://www.thegradcafe.com/survey/"
 
 
 def check_robots(url=None):
-    """Check robots.txt."""
+    """Verify that robots.txt allows scraping of the survey pages.
+
+    Args:
+        url: Optional URL to check (defaults to survey page).
+
+    Returns:
+        bool: True if scraping is allowed, True on error (permissive default).
+    """
     robots_url = urljoin(BASE_URL, "robots.txt")
     rp = urllib.robotparser.RobotFileParser()
     rp.set_url(robots_url)
@@ -43,7 +50,16 @@ def check_robots(url=None):
         return True  # allow scraping 
 
 def get_html(url, opener=None, delay=0.1): 
-    """Public wrapper used by tests.""" 
+    """Fetch HTML content from a URL.
+
+    Args:
+        url (str): Target URL to fetch.
+        opener: Optional urllib opener (used for testing).
+        delay (float): Rate-limiting delay in seconds.
+
+    Returns:
+        str | None: HTML content, or None on failure.
+    """ 
     if opener is not None: 
         try: 
             resp = opener.open(url, timeout=10) 
@@ -78,7 +94,15 @@ def parse_detail_gre_total_calculation(detail):
     return None
 
 def parse_detail_page_html(html, base_url=None):
-    """Public wrapper for tests."""
+    """Parse GPA, GRE, citizenship, and term from a detail page.
+
+    Args:
+        html (str): Raw HTML content of the detail page.
+        base_url (str | None): If provided, sets ``entry_url`` in the result.
+
+    Returns:
+        dict: Parsed fields including gpa, gre_v, gre_q, gre_aw, citizenship, term.
+    """
     result = _parse_detail_page_html(html)
 
     # Tests expect entry_url to exist
@@ -179,6 +203,15 @@ def _parse_detail_page_html(entry_url: str):
         return default
 
 def parse_row(tr, base_url): 
+    """Parse a single table row from the GradCafe listing page.
+
+    Args:
+        tr: BeautifulSoup ``<tr>`` element.
+        base_url (str): Base URL for resolving relative links.
+
+    Returns:
+        dict | None: Parsed entry with program, university, status, etc., or None if invalid.
+    """ 
     return _parse_row(tr, base_url)
 
 def _parse_row(tr, base_url: str) -> dict:
@@ -395,7 +428,14 @@ def scrape_data(max_entries: int = 1000, start_page: int = 1, parallel_threads: 
 
 
 def main():
-    """Main function."""
+    """Run the full scraping pipeline.
+
+    Checks robots.txt, scrapes GradCafe listing and detail pages in parallel,
+    and saves results to ``module_3/module_2.1/raw_applicant_data.json``.
+
+    Raises:
+        SystemExit: If robots.txt check fails.
+    """
     if not check_robots():
         raise SystemExit("❌ robots.txt check failed")
     
@@ -423,7 +463,7 @@ def main():
     print(f"\n✓ Saved {len(data)} entries to {output_file}")
 
 
-if __name__ == "__main__":     # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     try:
         start_time = datetime.now()
         main()

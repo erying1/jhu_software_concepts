@@ -36,16 +36,31 @@ RUNTIME_FILE = os.path.join(PROJECT_ROOT, "module_3", "last_runtime.txt")
 pull_running = False
 
 def get_last_pull(): 
+    """Read the timestamp of the last data pull from disk.
+
+    Returns:
+        str | None: Timestamp string, or None if no pull has occurred.
+    """ 
     if os.path.exists(TIMESTAMP_FILE): 
         return Path(TIMESTAMP_FILE).read_text(encoding="utf-8") 
     return None
 
 def get_last_runtime(): 
+    """Read the runtime duration of the last data pull from disk.
+
+    Returns:
+        str | None: Runtime string (e.g. '2m 15s'), or None if unavailable.
+    """ 
     if os.path.exists(RUNTIME_FILE): 
         return Path(RUNTIME_FILE).read_text(encoding="utf-8") 
     return None
 
 def load_scraped_records(): 
+    """Load raw scraped records from the LLM-extended JSON file.
+
+    Returns:
+        list[dict]: Parsed applicant records, or empty list if file missing.
+    """ 
     path = Path(os.path.join(PROJECT_ROOT, "module_3", "module_2.1", "llm_extend_applicant_data.json"))
     if path.exists(): 
         return json.loads(path.read_text(encoding="utf-8", errors="replace"))
@@ -61,6 +76,14 @@ def fmt(val):
         return val
 
 def pct(val): 
+    """Format a percentage value to two decimal places.
+
+    Args:
+        val: Numeric value or None.
+
+    Returns:
+        str: Formatted percentage or ``'N/A'`` if None or invalid.
+    """ 
     if val is None: 
         return "N/A" 
     try: 
@@ -69,12 +92,27 @@ def pct(val):
         return "N/A"
 
 def na(val): 
+    """Return ``'N/A'`` for None values, otherwise pass through.
+
+    Args:
+        val: Any value.
+
+    Returns:
+        Original value or ``'N/A'`` string.
+    """ 
     return "N/A" if val is None else val
 
 @bp.route("/") 
 @bp.route("/analysis") 
 def analysis(): 
-    # Safe fallback structure for template rendering 
+    """Serve the main analysis dashboard page.
+
+    Loads scraped records, runs all analysis queries, and computes scraper
+    diagnostics. Falls back to safe defaults if any step fails.
+
+    Returns:
+        str: Rendered ``analysis.html`` template.
+    """
     # Initialize defaults BEFORE try block
     results = {
         "avg_metrics": defaultdict(lambda: None),
@@ -110,7 +148,11 @@ def analysis():
 
 @bp.route("/pull-data", methods=["POST"])
 def pull_data():
-    """Trigger data scraping, cleaning, and loading."""
+    """Trigger the full data pipeline: scrape, clean, and load into PostgreSQL.
+
+    Returns JSON or redirects based on request type. Enforces busy-state
+    gating — returns 409 if a pull is already in progress.
+    """
     global pull_running
 
     # Check if pull is already running
@@ -188,7 +230,11 @@ def pull_data():
 
 @bp.route("/update-analysis", methods=["POST"])
 def update_analysis():
-    """Refresh analysis with latest database data."""
+    """Re-run analysis queries and refresh the dashboard.
+
+    Does not trigger a new data pull. Returns 409 if a pull is in progress.
+    Returns JSON or rendered template based on request type.
+    """
     global pull_running
 
     # Check if pull is running
@@ -239,7 +285,11 @@ def update_analysis():
 
 @bp.route("/status")
 def status():
-    """Check if system is busy."""
+    """Return the current busy state of the system.
+
+    Returns:
+        JSON: ``{"busy": true/false}`` with status 200.
+    """
     try: 
         return jsonify({"busy": pull_running}), 200 
     except Exception: 

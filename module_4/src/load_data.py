@@ -53,6 +53,17 @@ DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "llm_extend_applicant_dat
 # Load JSON from disk
 # -----------------------------
 def load_json(filepath: str):
+    """Load and parse a JSON file from disk.
+
+    Args:
+        filepath: Path to the JSON file.
+
+    Returns:
+        list | dict: Parsed JSON content.
+
+    Raises:
+        FileNotFoundError: If the file does not exist.
+    """
     file_path = Path(filepath)
 
     print(f"Loading file... '{filepath}'...") 
@@ -66,19 +77,35 @@ def load_json(filepath: str):
 # Connect to PostgreSQL
 # -----------------------------
 def get_connection():
+    """Connect to PostgreSQL, using DATABASE_URL if available.
+
+    Falls back to local connection parameters when DATABASE_URL is not set.
+    Password is read from PGPASSWORD environment variable with a local default.
+
+    Returns:
+        psycopg.Connection: Active database connection.
+    """
+    import os
+    url = os.environ.get("DATABASE_URL")
+    if url:
+        return psycopg.connect(url)
     return psycopg.connect(
         dbname="studentCourses",
         user="postgres",
-        password="Tolkien321",
+        password=os.environ.get("PGPASSWORD", "Tolkien321"),
         host="localhost",
         port=5432,
     )
-
 
 # -----------------------------
 # Create applicants table
 # -----------------------------
 def create_table(conn):
+    """Create the applicants table if it does not already exist.
+
+    Args:
+        conn: Active psycopg database connection.
+    """
     with conn.cursor() as cur:
         cur.execute(
         """
@@ -105,6 +132,14 @@ def create_table(conn):
     conn.commit()
                                    
 def normalize_record(raw):
+    """Map raw JSON field names to database column names.
+
+    Args:
+        raw (dict): Raw record from the scraped JSON data.
+
+    Returns:
+        dict: Normalized record ready for database insertion.
+    """
     return {
         "program": raw.get("program") or raw.get("program_name"),
         "comments": raw.get("comments"),
@@ -131,7 +166,7 @@ def reset_database(dbname="studentCourses"):
     conn = psycopg.connect( 
         dbname="postgres", 
         user="postgres", 
-        password="Tolkien321", 
+        password=os.environ.get("PGPASSWORD", "Tolkien321"), 
         host="localhost", 
         port=5432, 
         autocommit=True 
@@ -161,6 +196,17 @@ def reset_database(dbname="studentCourses"):
 # -----------------------------
 
 def insert_record(conn, record): 
+    """Insert a single applicant record, skipping duplicates.
+
+    Uses ON CONFLICT (url) DO NOTHING to enforce uniqueness.
+
+    Args:
+        conn: Active psycopg database connection.
+        record (dict): Normalized record with database column keys.
+
+    Returns:
+        int: 1 if inserted, 0 if duplicate.
+    """ 
     with conn.cursor() as cur: 
         cur.execute( 
             """ 
@@ -189,6 +235,11 @@ def insert_record(conn, record):
 # Main loader
 # -----------------------------
 def load_into_db(filepath: str):
+    """Load JSON data from a file and insert all records into PostgreSQL.
+
+    Args:
+        filepath: Path to the JSON file containing applicant records.
+    """
     data = load_json(filepath)
     conn = get_connection()
 

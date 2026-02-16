@@ -1,5 +1,13 @@
 
+"""
+query_data.py — Module 3 Analysis Queries
+------------------------------------------
+Provides SQL-backed analysis functions for the Grad Café dashboard.
 
+Each ``q*`` function executes a single query against the applicants table
+and returns a formatted result. :func:`get_all_analysis` aggregates all
+queries into a single dictionary consumed by the Flask routes.
+"""
 
 # at top of src/query_data.py 
 from src.load_data import get_connection as _real_get_connection
@@ -11,6 +19,11 @@ sys.modules['src.query_data'] = sys.modules[__name__]
 
 
 def ensure_table_exists(conn): 
+    """Create the applicants table if it does not already exist.
+
+    Args:
+        conn: Active psycopg database connection.
+    """
     with conn.cursor() as cur: 
         cur.execute(""" 
             CREATE TABLE IF NOT EXISTS applicants ( 
@@ -34,15 +47,29 @@ def ensure_table_exists(conn):
         """)
     conn.commit()
 
-def get_connection(): 
-    """ This function is patched by the tests. 
-    The real application does NOT use this version. 
-    """ 
+def get_connection():
+    """Get a database connection with table initialization.
+
+    Delegates to :func:`src.load_data.get_connection` and ensures the
+    applicants table exists before returning.
+
+    Returns:
+        psycopg.Connection: Ready-to-use database connection.
+    """
     conn = _real_get_connection() 
     ensure_table_exists(conn) 
     return conn
 
 def _format_or_passthrough(val): 
+    """Format a numeric value to two decimal places.
+
+    Args:
+        val: Value to format. Strings pass through unchanged,
+             None returns ``'N/A'``, numbers are formatted to 2 decimals.
+
+    Returns:
+        str: Formatted string representation.
+    """ 
     # If val is already a string (mocked tests), return it unchanged 
     if isinstance(val, str): 
         return val 
@@ -65,6 +92,11 @@ def _format_or_passthrough(val):
 
 
 def q1_fall_2026_count():
+    """Count applicants for Fall 2026 term.
+
+    Returns:
+        int: Number of applicants with term 'Fall 2026'.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -77,6 +109,11 @@ def q1_fall_2026_count():
 
 
 def q2_percent_international():
+    """Calculate percentage of international applicants.
+
+    Returns:
+        float: Percentage of non-American applicants.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -88,6 +125,11 @@ def q2_percent_international():
 
 
 def q3_average_metrics():
+    """Compute average GPA and GRE scores across all applicants.
+
+    Returns:
+        dict: Keys ``avg_gpa``, ``avg_gre``, ``avg_gre_v``, ``avg_gre_aw``.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -108,6 +150,11 @@ def q3_average_metrics():
 
 
 def q4_avg_gpa_american_fall_2026(): 
+    """Average GPA of American applicants for Fall 2026.
+
+    Returns:
+        str: Formatted GPA to two decimals, or ``'N/A'``.
+    """ 
     conn = get_connection() 
     with conn.cursor() as cur: 
         cur.execute(""" 
@@ -120,6 +167,11 @@ def q4_avg_gpa_american_fall_2026():
 
 
 def q5_percent_accept_fall_2026():
+    """Acceptance rate for Fall 2026 applicants.
+
+    Returns:
+        str: Percentage formatted to two decimals, or ``'N/A'``.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -133,6 +185,11 @@ def q5_percent_accept_fall_2026():
 
 
 def q6_avg_gpa_accept_fall_2026():
+    """Average GPA of accepted Fall 2026 applicants.
+
+    Returns:
+        str: Formatted GPA to two decimals, or ``'N/A'``.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -146,6 +203,11 @@ def q6_avg_gpa_accept_fall_2026():
 
 
 def q7_jhu_cs_masters_count():
+    """Count JHU Computer Science Masters applicants.
+
+    Returns:
+        int: Number of matching applicants.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -158,6 +220,13 @@ def q7_jhu_cs_masters_count():
 
 
 def q8_elite_cs_phd_accepts_2026():
+    """Count accepted CS PhD applicants at elite universities for Fall 2026.
+
+    Elite universities: Georgetown, MIT, Stanford, Carnegie Mellon.
+
+    Returns:
+        int: Number of accepted PhD applicants.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -174,6 +243,14 @@ def q8_elite_cs_phd_accepts_2026():
 
 
 def q9_elite_cs_phd_llm_accepts_2026():
+    """Count accepted CS applicants (all degrees) at elite universities for Fall 2026.
+
+    Uses LLM-generated program field. Elite universities: Georgetown, MIT,
+    Stanford, Carnegie Mellon.
+
+    Returns:
+        int: Number of accepted applicants.
+    """
     conn = get_connection()
     with conn.cursor() as cur:
         cur.execute("""
@@ -188,6 +265,11 @@ def q9_elite_cs_phd_llm_accepts_2026():
         return count or 0
 
 def q10_custom(): 
+    """Top 10 universities by total application count.
+
+    Returns:
+        list[tuple]: Rows of (university, count) ordered by count descending.
+    """ 
     conn = get_connection() 
     with conn.cursor() as cur: 
         cur.execute(""" 
@@ -201,6 +283,11 @@ def q10_custom():
         return cur.fetchall() 
     
 def q11_custom(): 
+    """Acceptance rate breakdown by degree level.
+
+    Returns:
+        list[tuple]: Rows of (degree, total, accepted, rate) ordered by rate descending.
+    """ 
     conn = get_connection() 
     with conn.cursor() as cur: 
         cur.execute(""" 
@@ -222,6 +309,11 @@ def q11_custom():
 
     
 def get_all_analysis(): 
+    """Run all analysis queries and return combined results.
+
+    Returns:
+        dict: All query results keyed by analysis name.
+    """ 
     return { 
         "fall_2026_count": q1_fall_2026_count(), 
         "pct_international": q2_percent_international(), 

@@ -5,22 +5,26 @@
 #
 # clean.py
 
-# Overview of clean.py:
-#
-# clean.py performs the second stage of the Module 2 workflow: transforming the raw scraped records into a consistent, analysis‑ready dataset. 
-# The script begins with a basic cleaning pass that normalizes status labels, removes leftover HTML, and converts missing or empty fields into 
-# None so the data has a uniform structure.
-#
-# After this initial cleanup, the script prepares the dataset for first‑pass standardization using the local TinyLlama model provided in the 
-# assignment bundle. Clean.py batches all program and university fields into a temporary file and 
-# invokes the LLM once through the llm_hosting/app.py pipeline. The model returns two new fields for every record—llm-generated-program and 
-# llm-generated-university—which represent the model’s best guess at a standardized version of each label.
-# The script then merges these LLM‑generated values back into the cleaned dataset, preserving the original fields while adding the standardized 
-# ones as additional columns. Finally, clean.py writes the fully processed dataset to applicant_data.json.
+"""
+clean.py -- Module 2 Data Cleaning Pipeline
+--------------------------------------------
+Transforms raw scraped records into a consistent, analysis-ready dataset.
 
-# Input file: raw_applicant_data.json (from scrape.py)
-# Output file: cleaned_applicant_data.json (includes basic cleaning)
-#              llm_extend_applicant_data.json (after calling the LLM for standardization and merging results)
+The pipeline has three stages:
+
+1. **Basic cleaning** -- normalize status labels, strip HTML from comments,
+   convert numeric fields, and standardize citizenship values.
+2. **LLM standardization** -- batch-process program and university names
+   through a local LLM to produce canonical labels.
+3. **Merge** -- attach the LLM-generated fields back to each record.
+
+Input:
+    ``raw_applicant_data.json`` (from ``scrape.py``)
+
+Output:
+    ``cleaned_data.json`` (after basic cleaning),
+    ``llm_extend_applicant_data.json`` (after LLM standardization)
+"""
 
 # Need for basic cleaning
 import json
@@ -39,6 +43,15 @@ from anthropic import Anthropic
 import anthropic
 
 def _normalize_status(status: str | None) -> str | None:
+    """Normalize an application status string to a canonical value.
+
+    Args:
+        status: Raw status string (e.g. 'accepted', 'Rejected', 'Wait listed').
+
+    Returns:
+        str | None: One of 'Accepted', 'Rejected', 'Waitlisted', the stripped
+        original, or None if input is empty/None.
+    """
     if not status:
         return None
     s = status.strip().lower()
@@ -51,11 +64,28 @@ def _normalize_status(status: str | None) -> str | None:
     return status.strip()
 
 def normalize_status(status): 
-    """Public wrapper for tests.""" 
+    """Public wrapper for :func:`_normalize_status`.
+
+    Args:
+        status: Raw status string.
+
+    Returns:
+        str | None: Normalized status value.
+    """ 
     return _normalize_status(status)
 
 def _clean_single_record(rec: Dict) -> Dict:
-    """Normalize one record."""
+    """Normalize a single applicant record.
+
+    Performs status normalization, text stripping, HTML removal from comments,
+    numeric conversion for GPA/GRE fields, and citizenship standardization.
+
+    Args:
+        rec (dict): Raw scraped record.
+
+    Returns:
+        dict: Cleaned record with normalized fields.
+    """
     rec = dict(rec)  # shallow copy
 
     # --- Normalize status ---
@@ -112,11 +142,18 @@ def _clean_single_record(rec: Dict) -> Dict:
 
 
 def clean_data(raw_records: List[Dict]) -> List[Dict]:
-    """
-    Full cleaning pipeline:
-    1. Basic cleaning
-    2. Batch LLM standardization
-    3. Merge LLM results into records
+    """Run the full cleaning pipeline on a list of raw records.
+
+    Steps:
+        1. Basic cleaning (normalize fields, strip HTML, convert types).
+        2. Batch LLM standardization of program and university names.
+        3. Merge LLM-generated fields back into each record.
+
+    Args:
+        raw_records (list[dict]): Raw scraped records from ``scrape.py``.
+
+    Returns:
+        list[dict]: Cleaned records with LLM-generated fields attached.
     """
 
  
@@ -176,13 +213,25 @@ def clean_data(raw_records: List[Dict]) -> List[Dict]:
 
      
 def save_data(cleaned_records: List[Dict], filename: str = "applicant_data.json"):
-    """Save cleaned data to JSON."""
+    """Save cleaned records to a JSON file.
+
+    Args:
+        cleaned_records (list[dict]): Records to save.
+        filename (str): Output file path.
+    """
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(cleaned_records, f, ensure_ascii=False, indent=2)
 
 
 def load_data(filename: str = "applicant_data.json") -> List[Dict]:
-    """Load cleaned data from JSON."""
+    """Load records from a JSON file.
+
+    Args:
+        filename (str): Path to the JSON file.
+
+    Returns:
+        list[dict]: Parsed records.
+    """
     with open(filename, "r", encoding="utf-8") as f:
         return json.load(f)
 
@@ -192,9 +241,19 @@ def load_data(filename: str = "applicant_data.json") -> List[Dict]:
 # Calls the local TinyLlama standardizer in llm_hosting/app.py in a batch mode for the whole file
 
 def llm_clean_batch(records: list[dict]) -> list[dict]:
-    """
-    Calls the local LLM standardizer (module_3/module_2.1/llm_hosting/app.py) on a batch of records.
-    Returns a list of dicts with LLM-generated fields merged in.
+    """Standardize program and university names using a local LLM.
+
+    Writes records to a temp file, invokes ``llm_hosting/app.py``, and reads
+    back JSONL output with ``llm-generated-program`` and
+    ``llm-generated-university`` fields.
+
+    Args:
+        records (list[dict]): Batch of records with ``program_name``
+            and ``university`` fields.
+
+    Returns:
+        list[dict]: Records with LLM-generated fields, or the original
+        records unchanged if the LLM step fails.
     """
 
     if not records:
@@ -244,18 +303,20 @@ def llm_clean_batch(records: list[dict]) -> list[dict]:
 
 
 def main():
-    """Main pipeline: load raw, clean, save."""
+    """Run the full cleaning pipeline from the command line.
+
+    Loads raw data, runs basic + LLM cleaning, and saves the result.
+    """
     raw = load_data("module_3/module_2.1/raw_applicant_data.json")
     print(f"Loaded {len(raw)} rows from module_3/module_2.1/raw_applicant_data.json")
 
-    # Clean the data: basic and LLM
     cleaned = clean_data(raw)
 
     save_data(cleaned, "module_3/module_2.1/llm_extend_applicant_data.json")
     print(f"Saved {len(cleaned)} rows after clean+LLM to module_3/module_2.1/llm_extend_applicant_data.json")
 
 
-if __name__ == "__main__":     # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     main()
 
 __all__ = [ 
@@ -264,6 +325,6 @@ __all__ = [
     "clean_data", 
     "save_data", 
     "load_data", 
-    "llm_clean_batch",
+    "llm_clean_batch", 
     "main",
 ]
