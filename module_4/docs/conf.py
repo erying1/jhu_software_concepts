@@ -14,6 +14,15 @@ extensions = [
 ]
 autosummary_generate = True
 
+# Mock imports that aren't available in the Sphinx build environment
+autodoc_mock_imports = [
+    'psycopg',
+    'flask',
+    'anthropic',
+    'bs4',
+    'requests',
+]
+
 templates_path = ['_templates']
 exclude_patterns = []
 
