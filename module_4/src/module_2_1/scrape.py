@@ -463,21 +463,31 @@ def main():
     print(f"\n✓ Saved {len(data)} entries to {output_file}")
 
 
-if __name__ == "__main__":  # pragma: no cover
+def cli_main():
+    """CLI entry point with timing and error handling.
+
+    Runs the full scraping pipeline, prints elapsed time on success,
+    and handles KeyboardInterrupt and unexpected errors gracefully.
+    """
     try:
         start_time = datetime.now()
         main()
         end_time = datetime.now()
         duration = (end_time - start_time).total_seconds()
-        print(f"\n⏱ Total time: {duration:.1f} seconds ({duration/60:.1f} minutes)")
+        print(f"\nTotal time: {duration:.1f} seconds ({duration/60:.1f} minutes)")
     except KeyboardInterrupt:
-        print("\n⚠ Interrupted by user")
+        print("\nInterrupted by user")
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        print(f"\nError: {e}")
         import traceback
         traceback.print_exc()
 
+
+if __name__ == "__main__":  # pragma: no cover
+    cli_main()
+
 __all__ = [ 
+    "cli_main", 
     "get_html", 
     "check_robots", 
     "parse_detail_page_html", 

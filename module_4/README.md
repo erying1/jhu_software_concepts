@@ -54,32 +54,35 @@ The application uses:
 
 ```
 DATABASE_URL=postgresql://<user>:<password>@<host>:<port>/<dbname>
+PGPASSWORD=<password>   # fallback when DATABASE_URL is not set
 ```
 
 Example for local development:
 
 ```bash
-export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/gradcafe
+export DATABASE_URL=postgresql://postgres:postgres@localhost:5432/studentCourses
 ```
 
 ### 3. Run the Flask app
 
 ```bash
-flask --app src.app run
+python -m src.run
 ```
 
 ## Running Tests
 
-### Full suite with coverage
+### Full suite with coverage (matches pytest.ini)
 
 ```bash
-pytest -q --cov=src --cov-report=term-missing
+pytest -m "web or buttons or analysis or db or integration" --cov=src --cov-report=term-missing --cov-fail-under=100
 ```
 
-### Marker-based execution (required by assignment)
+### Run a single marker group
 
 ```bash
-pytest -m "web or buttons or analysis or db or integration"
+pytest -m web
+pytest -m db
+pytest -m integration
 ```
 
 ### Markers Used
@@ -96,7 +99,7 @@ All tests in this project are marked as required.
 
 ## 📊 Coverage Achievement
 
-This project achieves **100% test coverage** across all modules (181 tests, 0 lines missed).
+This project achieves **100% test coverage** across all modules.
 
 ### Per-Module Breakdown
 

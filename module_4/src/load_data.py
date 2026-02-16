@@ -271,13 +271,22 @@ def main(drop=False):
 # ----------------------------- 
 # CLI entrypoint 
 # ----------------------------- 
-if __name__ == "__main__":     # pragma: no cover
+def cli_main(args=None):
+    """Parse CLI arguments and run the loader.
+
+    Args:
+        args: Optional list of CLI arguments (for testing). Defaults to sys.argv.
+    """
     parser = argparse.ArgumentParser(description="Load applicant data into PostgreSQL.") 
     parser.add_argument( 
         "--drop", 
         action="store_true", 
         help="Drop and recreate the studentCourses database before loading." 
     ) 
-    args = parser.parse_args() 
-    main(drop=args.drop)
+    parsed = parser.parse_args(args) 
+    main(drop=parsed.drop)
+
+
+if __name__ == "__main__":  # pragma: no cover
+    cli_main()
 
