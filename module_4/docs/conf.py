@@ -1,8 +1,16 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
 
-project = 'Grad Café Analytics'
+# Directory containing this conf.py file 
+DOCS_DIR = os.path.dirname(os.path.abspath(__file__)) 
+
+# Project root (one level up from docs/) 
+PROJECT_ROOT = os.path.abspath(os.path.join(DOCS_DIR, "..")) 
+
+# Add project root so 'src' is importable as a package
+sys.path.insert(0, PROJECT_ROOT)
+
+project = 'Grad Cafe Analytics'
 author = 'Eric Rying'
 release = '1.0'
 

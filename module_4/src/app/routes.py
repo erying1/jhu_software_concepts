@@ -288,7 +288,7 @@ def status():
     """Return the current busy state of the system.
 
     Returns:
-        JSON: ``{"busy": true/false}`` with status 200.
+        dict: ``{"busy": true/false}`` with status 200.
     """
     try: 
         return jsonify({"busy": pull_running}), 200 
