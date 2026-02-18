@@ -1,0 +1,5 @@
+[MESSAGES CONTROL]
+# R0801: duplicate-code — similarity across files is intentional here;
+# the CREATE TABLE DDL and float-formatting helpers are deliberately
+# co-located in each module for self-contained testability.
+disable=duplicate-code

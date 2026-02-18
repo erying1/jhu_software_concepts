@@ -1,0 +1,24 @@
+# App dependencies
+flask
+beautifulsoup4==4.12.3
+psycopg2-binary
+anthropic
+
+# Testing dependencies
+pytest
+pytest-cov
+
+# Database
+psycopg
+psycopg-binary
+
+# Documentation dependencies
+sphinx
+sphinx-rtd-theme
+sphinx-autobuild
+
+# Dev tools
+pylint
+pydeps
+
+
