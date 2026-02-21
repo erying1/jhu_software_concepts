@@ -1,8 +1,7 @@
 # App dependencies
-flask
+flask==3.1.3
 beautifulsoup4==4.12.3
-psycopg2-binary
-anthropic
+requests
 
 # Testing dependencies
 pytest
@@ -11,6 +10,7 @@ pytest-cov
 # Database
 psycopg
 psycopg-binary
+werkzeug==3.1.6
 
 # Documentation dependencies
 sphinx
@@ -20,5 +20,3 @@ sphinx-autobuild
 # Dev tools
 pylint
 pydeps
-
-
