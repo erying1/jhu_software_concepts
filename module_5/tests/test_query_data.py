@@ -187,8 +187,10 @@ def test_q10_custom(monkeypatch):
     ]
 
     class FakeCursor:
-        def execute(self, sql):
-            assert "GROUP BY llm_generated_university" in sql
+        def execute(self, sql, params=None):
+            # sql is a psycopg.sql.SQL object, convert to string for assertion
+            sql_str = str(sql) if hasattr(sql, 'as_string') else str(sql)
+            assert "llm_generated_university" in sql_str
 
         def fetchall(self):
             return fake_rows
@@ -229,7 +231,7 @@ def test_q11_custom(monkeypatch):
         def __exit__(self, *args):
             pass
 
-        def execute(self, query):
+        def execute(self, query, params=None):
             pass
 
         def fetchall(self):

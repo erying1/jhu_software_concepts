@@ -16,6 +16,7 @@ def test_get_connection_uses_database_url(monkeypatch):
         from src.load_data import get_connection
 
         conn = get_connection()
+        # get_connection() passes DATABASE_URL directly to psycopg.connect()
         mock_connect.assert_called_once_with(
             "postgresql://user:pass@localhost:5432/testdb"
         )
