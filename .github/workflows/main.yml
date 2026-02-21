@@ -72,8 +72,11 @@ jobs:
         run: |
           cd module_5
           npm install -g snyk
-          snyk auth $SNYK_TOKEN
-          snyk test --severity-threshold=high || echo "Snyk found issues or token not configured"
+          if [ -n "$SNYK_TOKEN" ]; then
+            snyk test --token=$SNYK_TOKEN --severity-threshold=high || echo "Snyk found vulnerabilities"
+          else
+            echo "SNYK_TOKEN not configured, skipping Snyk scan"
+          fi
 
       # 8. Run pytest with coverage (fail if < 100%)
       - name: Run pytest
