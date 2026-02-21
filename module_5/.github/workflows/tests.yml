@@ -38,14 +38,44 @@ jobs:
         with:
           python-version: "3.11"
 
-      # 3. Install dependencies
+      # 3. Install Graphviz (for pydeps)
+      - name: Install Graphviz
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y graphviz
+
+      # 4. Install dependencies
       - name: Install dependencies
         run: |
           cd module_5
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      # 4. Run tests with coverage
+      # 5. Run Pylint (fail if < 10/10)
+      - name: Run Pylint
+        run: |
+          cd module_5
+          pylint src --fail-under=10
+
+      # 6. Generate dependency graph with pydeps
+      - name: Generate dependency.svg
+        run: |
+          cd module_5
+          pydeps src/run.py --noshow -T svg -o dependency.svg
+          test -f dependency.svg || exit 1
+
+      # 7. Run Snyk dependency scan
+      - name: Run Snyk test
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          cd module_5
+          npm install -g snyk
+          snyk auth $SNYK_TOKEN
+          snyk test --severity-threshold=high || echo "Snyk found issues or token not configured"
+
+      # 8. Run pytest with coverage (fail if < 100%)
       - name: Run pytest
         env:
           DB_HOST: localhost
@@ -55,4 +85,4 @@ jobs:
           DB_PASSWORD: postgres
         run: |
           cd module_5
-          pytest --cov=src --cov-report=term-missing
+          pytest --cov=src --cov-report=term-missing --cov-fail-under=100
