@@ -8,6 +8,22 @@ from unittest.mock import MagicMock, mock_open, patch
 
 
 @pytest.mark.web
+def test_get_last_analysis_file_exists(monkeypatch, tmp_path):
+    """Line 79: get_last_analysis returns timestamp when file exists"""
+    from src.app import routes
+
+    # Create a temporary timestamp file
+    timestamp_file = tmp_path / "last_analysis.txt"
+    timestamp_file.write_text("Feb 22, 2026 03:45 PM", encoding="utf-8")
+
+    # Mock the ANALYSIS_TIMESTAMP_FILE path
+    monkeypatch.setattr(routes, "ANALYSIS_TIMESTAMP_FILE", str(timestamp_file))
+
+    result = routes.get_last_analysis()
+    assert result == "Feb 22, 2026 03:45 PM"
+
+
+@pytest.mark.web
 def test_get_last_analysis_file_not_exists(monkeypatch):
     """Line 80: get_last_analysis returns None when file doesn't exist"""
     from src.app import routes
