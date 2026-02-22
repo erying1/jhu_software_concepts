@@ -4,6 +4,16 @@
 import sys
 import os
 import pytest
+from pathlib import Path
+
+# Ensure .env exists for coverage BEFORE any imports
+# (run.py loads it at import time, so must exist before conftest imports anything)
+project_root = Path(__file__).parent.parent
+env_file = project_root / ".env"
+env_example = project_root / ".env.example"
+
+if not env_file.exists() and env_example.exists():
+    env_file.write_text(env_example.read_text())
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
