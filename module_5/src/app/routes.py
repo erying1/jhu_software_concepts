@@ -193,7 +193,7 @@ def analysis():
 
 
 @bp.route("/pull-data", methods=["POST"])
-def pull_data():
+def pull_data():  # pylint: disable=too-many-locals,too-many-return-statements,too-many-statements
     """Trigger the full data pipeline: scrape, clean, and load into PostgreSQL.
 
     Returns JSON or redirects based on request type. Enforces busy-state
@@ -322,9 +322,6 @@ def update_analysis():
         if not isinstance(results, dict) or "avg_metrics" not in results:
             raise ValueError("Invalid results structure")
 
-        records = load_scraped_records()
-        scraper_diag = compute_scraper_diagnostics(records)
-
         # Save analysis refresh timestamp
         analysis_timestamp = datetime.now().strftime("%b %d, %Y %I:%M %p")
         try:
@@ -353,7 +350,6 @@ def update_analysis():
             "acceptance_by_degree": [],
             "timestamp": None,
         }
-        scraper_diag = {}
 
     # Return JSON only for explicit JSON requests (AJAX)
     # Regular form submissions get a redirect to avoid showing JSON in browser

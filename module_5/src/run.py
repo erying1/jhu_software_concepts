@@ -24,7 +24,6 @@ Key responsibilities:
 This file is the user‑facing interface for the entire Module 2 → Module 3 pipeline.
 """
 
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
