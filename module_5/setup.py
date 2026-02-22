@@ -24,9 +24,8 @@ setup(
         "flask",
         "beautifulsoup4==4.12.3",
         "psycopg2-binary",
-        "anthropic",
-        "psycopg",
-        "psycopg-binary",
+        "requests",
+        "werkzeug==3.1.6",
     ],
     extras_require={
         "dev": [
