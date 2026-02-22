@@ -10,6 +10,7 @@ Tests:
 """
 
 import pytest
+from unittest.mock import MagicMock
 
 
 @pytest.mark.web
@@ -54,8 +55,13 @@ def test_analysis_page_has_answer_labels(client):
 
 
 @pytest.mark.web
-def test_flask_app_has_required_routes(client):
+def test_flask_app_has_required_routes(client, monkeypatch):
     """Test that Flask app has all required routes"""
+    # Mock subprocess.run to prevent actual pipeline execution
+    import subprocess
+    mock_run = MagicMock(return_value=MagicMock(returncode=0))
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
     # Test main analysis route
     response = client.get("/")
     assert response.status_code == 200
@@ -66,4 +72,4 @@ def test_flask_app_has_required_routes(client):
 
     # Test update-analysis route exists (may return various status codes)
     response = client.post("/update-analysis")
-    assert response.status_code in [200, 400, 409, 500]
+    assert response.status_code in [200, 302, 400, 409, 500]

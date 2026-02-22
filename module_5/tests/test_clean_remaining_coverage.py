@@ -79,4 +79,4 @@ def test_clean_main_block(monkeypatch):
     clean.main()
 
     assert saved["data"] == fake_cleaned
-    assert saved["path"] == "module_3/module_2.1/llm_extend_applicant_data.json"
+    assert saved["path"] == "module_2_1/llm_extend_applicant_data.json"

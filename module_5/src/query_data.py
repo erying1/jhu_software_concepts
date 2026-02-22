@@ -28,29 +28,38 @@ def ensure_table_exists(conn):
 
     Args:
         conn: Active psycopg database connection.
+
+    Note:
+        Silently ignores permission errors, as the table may have been
+        created by a superuser with appropriate privileges.
     """
-    with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS applicants ( 
-                p_id SERIAL PRIMARY KEY, 
-                program TEXT, 
-                comments TEXT,
-                date_added DATE, 
-                url TEXT UNIQUE, 
-                status TEXT, 
-                status_date TEXT, 
-                term TEXT, 
-                us_or_international TEXT, 
-                gpa FLOAT, 
-                gre_total_score FLOAT, 
-                gre_verbal_score FLOAT, 
-                gre_aw_score FLOAT, 
-                degree TEXT, 
-                llm_generated_program TEXT, 
-                llm_generated_university TEXT 
-            ); 
-        """)
-    conn.commit()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS applicants (
+                    p_id SERIAL PRIMARY KEY,
+                    program TEXT,
+                    comments TEXT,
+                    date_added DATE,
+                    url TEXT UNIQUE,
+                    status TEXT,
+                    status_date TEXT,
+                    term TEXT,
+                    us_or_international TEXT,
+                    gpa FLOAT,
+                    gre_total_score FLOAT,
+                    gre_verbal_score FLOAT,
+                    gre_aw_score FLOAT,
+                    degree TEXT,
+                    llm_generated_program TEXT,
+                    llm_generated_university TEXT
+                );
+            """)
+        conn.commit()
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Table may already exist or user lacks CREATE privilege
+        # Ignore the error and proceed
+        conn.rollback()
 
 
 def get_connection():

@@ -24,7 +24,17 @@ Key responsibilities:
 This file is the user‑facing interface for the entire Module 2 → Module 3 pipeline.
 """
 
+import os
+from pathlib import Path
+
+from dotenv import load_dotenv
+
 from src.app import create_app
+
+# Load environment variables from .env file
+dotenv_path = Path(__file__).resolve().parents[1] / ".env"
+if dotenv_path.exists():
+    load_dotenv(dotenv_path)
 
 app = create_app()
 

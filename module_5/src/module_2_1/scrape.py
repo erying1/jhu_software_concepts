@@ -373,7 +373,7 @@ def fetch_detail_batch(records, max_workers=10):
                 # If detail fetch fails, keep basic record
                 pass
 
-    print(f"  ✓ Completed {completed}/{total} detail pages")
+    print(f"  [OK] Completed {completed}/{total} detail pages")
     return records
 
 
@@ -427,7 +427,7 @@ def scrape_data(  # pylint: disable=too-many-locals,too-many-branches,too-many-s
         print(f"  Page {page}: {len(all_entries)} total entries collected")
         page += 1
 
-    print(f"\n✓ Phase 1 complete: {len(all_entries)} entries")
+    print(f"\n[OK] Phase 1 complete: {len(all_entries)} entries")
 
     # Phase 2: Fetch detail pages in parallel (FAST!)
     print("\nPhase 2: Fetching detail data in parallel...")
@@ -479,15 +479,15 @@ def main():
     """Run the full scraping pipeline.
 
     Checks robots.txt, scrapes GradCafe listing and detail pages in parallel,
-    and saves results to ``module_5/module_2.1/raw_applicant_data.json``.
+    and saves results to ``module_2_1/raw_applicant_data.json``.
 
     Raises:
         SystemExit: If robots.txt check fails.
     """
     if not check_robots():
-        raise SystemExit("❌ robots.txt check failed")
+        raise SystemExit("[ERROR] robots.txt check failed")
 
-    print("✓ robots.txt OK\n")
+    print("[OK] robots.txt OK\n")
 
     # FAST scrape with parallel processing
     # Adjust parallel_threads: higher = faster but more aggressive
@@ -497,14 +497,14 @@ def main():
     )
 
     # Save to file
-    output_dir = os.path.join("module_3", "module_2.1")
+    output_dir = "module_2_1"
     os.makedirs(output_dir, exist_ok=True)
     output_file = os.path.join(output_dir, "raw_applicant_data.json")
 
     with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
-    print(f"\n✓ Saved {len(data)} entries to {output_file}")
+    print(f"\n[OK] Saved {len(data)} entries to {output_file}")
 
 
 def cli_main():

@@ -18,6 +18,7 @@ Key responsibilities:
 import json
 import os
 import subprocess
+import sys
 from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
@@ -38,8 +39,9 @@ bp = Blueprint("main", __name__, url_prefix="/")
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(APP_DIR, "..", ".."))
-TIMESTAMP_FILE = os.path.join(PROJECT_ROOT, "module_3", "last_pull.txt")
-RUNTIME_FILE = os.path.join(PROJECT_ROOT, "module_3", "last_runtime.txt")
+TIMESTAMP_FILE = os.path.join(PROJECT_ROOT, "last_pull.txt")
+RUNTIME_FILE = os.path.join(PROJECT_ROOT, "last_runtime.txt")
+ANALYSIS_TIMESTAMP_FILE = os.path.join(PROJECT_ROOT, "last_analysis.txt")
 
 # Global busy state flag
 pull_running = False  # pylint: disable=invalid-name
@@ -67,6 +69,17 @@ def get_last_runtime():
     return None
 
 
+def get_last_analysis():
+    """Read the timestamp of the last analysis refresh from disk.
+
+    Returns:
+        str | None: Timestamp string, or None if no refresh has occurred.
+    """
+    if os.path.exists(ANALYSIS_TIMESTAMP_FILE):
+        return Path(ANALYSIS_TIMESTAMP_FILE).read_text(encoding="utf-8")
+    return None
+
+
 def load_scraped_records():
     """Load raw scraped records from the LLM-extended JSON file.
 
@@ -75,7 +88,7 @@ def load_scraped_records():
     """
     path = Path(
         os.path.join(
-            PROJECT_ROOT, "module_3", "module_2.1", "llm_extend_applicant_data.json"
+            PROJECT_ROOT, "module_2_1", "llm_extend_applicant_data.json"
         )
     )
     if path.exists():
@@ -172,6 +185,7 @@ def analysis():
         pull_running=pull_running,
         last_data_pull=get_last_pull(),
         last_runtime=get_last_runtime(),
+        last_analysis_refresh=get_last_analysis(),
         fmt=fmt,
         pct=pct,
         na=na,
@@ -189,7 +203,7 @@ def pull_data():
 
     # Check if pull is already running
     if pull_running:
-        if request.is_json or request.accept_mimetypes.accept_json:
+        if request.is_json:
             return (
                 jsonify({"busy": True, "message": "A data pull is already running."}),
                 409,
@@ -205,33 +219,40 @@ def pull_data():
         pull_running = True
         start_time = datetime.now()
 
+        # Prepare environment with DB credentials
+        env = os.environ.copy()
+
+        # Windows-specific fix: Use absolute path to venv python
+        # and construct command as a string for shell=True
+        python_exe = sys.executable
+
         # Run scraper
-        scraper = os.path.join(
-            PROJECT_ROOT, "module_4", "src", "module_2.1", "scrape.py"
-        )
-        subprocess.run(["python", scraper], check=True, cwd=PROJECT_ROOT)
+        scraper = os.path.join(PROJECT_ROOT, "src", "module_2_1", "scrape.py")
+        cmd_scraper = f'"{python_exe}" "{scraper}"'
+        subprocess.run(cmd_scraper, check=True, cwd=PROJECT_ROOT, env=env, shell=True)
 
         last_data_pull = datetime.now().strftime("%b %d, %Y %I:%M %p")
 
         # Run cleaner
-        cleaner = os.path.join(
-            PROJECT_ROOT, "module_4", "src", "module_2.1", "scrape.py"
-        )
-        subprocess.run(["python", cleaner], check=True, cwd=PROJECT_ROOT)
+        cleaner = os.path.join(PROJECT_ROOT, "src", "module_2_1", "clean.py")
+        cmd_cleaner = f'"{python_exe}" "{cleaner}"'
+        subprocess.run(cmd_cleaner, check=True, cwd=PROJECT_ROOT, env=env, shell=True)
 
         # Load cleaned data into PostgreSQL
-        loader = os.path.join(PROJECT_ROOT, "module_4", "src", "load_data.py")
-        subprocess.run(["python", loader, "--drop"], check=False, cwd=PROJECT_ROOT)
-
-        subprocess.run(["echo", "extra"], check=False)
+        # Note: Don't use --drop because gradcafe_app user can't drop/recreate database
+        # The loader handles duplicates with ON CONFLICT (url) DO NOTHING
+        loader = os.path.join(PROJECT_ROOT, "src", "load_data.py")
+        cmd_loader = f'"{python_exe}" "{loader}"'
+        subprocess.run(cmd_loader, check=True, cwd=PROJECT_ROOT, env=env, shell=True)
 
         end_time = datetime.now()
         runtime_seconds = int((end_time - start_time).total_seconds())
         minutes, seconds = divmod(runtime_seconds, 60)
         runtime_str = f"{minutes}m {seconds}s"
 
-        # Return JSON or redirect based on request type
-        if request.is_json or request.accept_mimetypes.accept_json:
+        # Return JSON only for explicit JSON requests (AJAX)
+        # Regular form submissions get a redirect to avoid showing JSON in browser
+        if request.is_json:
             return (
                 jsonify(
                     {
@@ -247,13 +268,20 @@ def pull_data():
 
     except subprocess.CalledProcessError as e:
         error_msg = f"Subprocess error: {e}"
-        if request.is_json or request.accept_mimetypes.accept_json:
+        if request.is_json:
+            return jsonify({"ok": False, "error": error_msg}), 500
+        flash(error_msg)
+
+    except FileNotFoundError as e:
+        # More specific error for missing files
+        error_msg = f"File not found: {e}. sys.executable={sys.executable}"
+        if request.is_json:
             return jsonify({"ok": False, "error": error_msg}), 500
         flash(error_msg)
 
     except Exception as e:  # pylint: disable=broad-exception-caught
         error_msg = f"Error during data pull: {e}"
-        if request.is_json or request.accept_mimetypes.accept_json:
+        if request.is_json:
             return jsonify({"ok": False, "error": error_msg}), 500
         flash(error_msg)
 
@@ -296,6 +324,15 @@ def update_analysis():
 
         records = load_scraped_records()
         scraper_diag = compute_scraper_diagnostics(records)
+
+        # Save analysis refresh timestamp
+        analysis_timestamp = datetime.now().strftime("%b %d, %Y %I:%M %p")
+        try:
+            with open(ANALYSIS_TIMESTAMP_FILE, "w", encoding="utf-8") as f:
+                f.write(analysis_timestamp)
+        except OSError:
+            pass
+
     except Exception:  # pylint: disable=broad-exception-caught
         results = {
             "avg_metrics": defaultdict(lambda: None),
@@ -318,25 +355,17 @@ def update_analysis():
         }
         scraper_diag = {}
 
-    # Return JSON or render based on request type
-    if request.is_json or request.accept_mimetypes.accept_json:
+    # Return JSON only for explicit JSON requests (AJAX)
+    # Regular form submissions get a redirect to avoid showing JSON in browser
+    if request.is_json:
         return (
             jsonify({"ok": True, "message": "Analysis updated with the latest data."}),
             200,
         )
 
+    # For regular form POST, flash message and redirect back to analysis page
     flash("Analysis updated with the latest data.")
-    return render_template(
-        "analysis.html",
-        results=results,
-        scraper_diag=scraper_diag,
-        pull_running=pull_running,
-        last_data_pull=get_last_pull(),
-        last_runtime=get_last_runtime(),
-        fmt=fmt,
-        pct=pct,
-        na=na,
-    )
+    return redirect(url_for("main.analysis"))
 
 
 @bp.route("/status")

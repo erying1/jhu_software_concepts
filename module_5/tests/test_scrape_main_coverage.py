@@ -38,7 +38,7 @@ def test_scrape_main_success(monkeypatch, tmp_path):
 
     scrape.main()
 
-    output_file = tmp_path / "module_3" / "module_2.1" / "raw_applicant_data.json"
+    output_file = tmp_path / "module_2_1" / "raw_applicant_data.json"
     assert output_file.exists()
     data = json.loads(output_file.read_text(encoding="utf-8"))
     assert len(data) == 1

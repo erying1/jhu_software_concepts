@@ -26,13 +26,12 @@ from psycopg2 import sql
 # Note: How to start postgres locally (Windows):
 # & C:\Program Files\PostgreSQL\18\bin\psql.exe" -U postgres
 
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATA_FILE = PROJECT_ROOT / "module_3" / "module_2.1" / "llm_extend_applicant_data.json"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]  # Go up to module_5/ directory
+DATA_FILE = PROJECT_ROOT / "module_2_1" / "llm_extend_applicant_data.json"
 
 # BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-# DATA_FILE = os.path.join(BASE_DIR, "module_2.1", "llm_extend_applicant_data.json")
-# DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "llm_extend_applicant_data.json")
-# DATA_FILE = os.path.join(BASE_DIR, "module_3", "module_2.1", "cleaned_data.json")
+# DATA_FILE = os.path.join(BASE_DIR, "module_2_1", "llm_extend_applicant_data.json")
+# DATA_FILE = os.path.join(BASE_DIR, "module_2_1", "cleaned_data.json")
 
 
 # -----------------------------
@@ -159,8 +158,9 @@ def reset_database(dbname="studentCourses"):
         password=os.environ.get("DB_PASSWORD"),
         host=os.environ.get("DB_HOST", "localhost"),
         port=int(os.environ.get("DB_PORT", "5432")),
-        autocommit=True,
     )
+    # In psycopg2, autocommit is set as an attribute, not a connection parameter
+    conn.autocommit = True
 
     with conn.cursor() as cur:
         # Terminate active connections

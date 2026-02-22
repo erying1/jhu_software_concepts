@@ -26,6 +26,7 @@ setup(
         "psycopg2-binary",
         "requests",
         "werkzeug==3.1.6",
+        "python-dotenv",
     ],
     extras_require={
         "dev": [

@@ -188,12 +188,9 @@ Generated using:
 pydeps src/run.py --noshow -T svg -o dependency.svg
 ```
 
-The graph shows:
+### Key Dependencies Explained
 
-- `run.py` as the entry point
-- `src.app` and `src.app.routes` as the Flask layer
-- `src.module_2_1`, `src.load_data`, `src.query_data` as pipeline modules
-- No circular dependencies
+The dependency graph visualizes the module structure of the Grad School Café application, with `run.py` serving as the main entry point that initializes the Flask application. The `src.app` module contains the Flask application factory and route handlers (`src.app.routes`), which orchestrate HTTP requests and responses for the web interface. The `src.app.routes` module depends on `src.query_data` for database analysis queries and `src.load_data` for database connections, demonstrating clear separation between the web layer and data access layer. The data pipeline modules (`src.module_2_1.scrape`, `src.module_2_1.clean`, and `src.load_data`) handle the scraping, cleaning, and loading workflow but remain independent of the Flask web layer. The `src.query_data` module provides SQL query functions with safe parameter binding and LIMIT enforcement, serving as the primary interface between Flask routes and the PostgreSQL database. Notably, the graph shows no circular dependencies, confirming a clean, unidirectional dependency structure that promotes maintainability and testability. All external dependencies like Flask, psycopg2, and BeautifulSoup are isolated to their respective modules, preventing tight coupling across the application.
 
 The file `dependency.svg` is included in the repository.
 

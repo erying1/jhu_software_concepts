@@ -92,8 +92,8 @@ def test_update_analysis_exception_in_try(client, monkeypatch):
     monkeypatch.setattr(routes, "compute_scraper_diagnostics", lambda x: {})
 
     response = client.post("/update-analysis")
-    # Might succeed with missing data or fail gracefully
-    assert response.status_code in [200, 500]
+    # Might succeed with missing data or fail gracefully (302 = redirect)
+    assert response.status_code in [200, 302, 500]
 
 
 @pytest.mark.web
@@ -110,11 +110,14 @@ def test_status_endpoint_error_handling(client, monkeypatch):
 
 
 @pytest.mark.web
-def test_routes_final_return_path(client):
+def test_routes_final_return_path(client, monkeypatch):
     """Lines 243-244: Final return in pull_data after all processing"""
-    # This might be the final redirect/return after successful pull
-    # We can't easily test without actually running scraper
-    # But we can verify the route exists
+    # Mock subprocess to prevent actual pipeline execution
+    import subprocess
+    mock_run = MagicMock(return_value=MagicMock(returncode=0))
+    monkeypatch.setattr(subprocess, "run", mock_run)
+
+    # This tests the final redirect/return after successful pull
     response = client.post("/pull-data")
     assert response.status_code in [200, 302, 409]
 

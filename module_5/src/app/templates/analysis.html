@@ -158,7 +158,11 @@ Grad School Café Data Analysis
     <p><strong>Last data pull:</strong> No data pull has been run yet.</p>
 {% endif %}
 
-<p><strong>Last analysis refresh:</strong> {{ results.timestamp }}</p>
+{% if last_analysis_refresh %}
+    <p><strong>Last analysis refresh:</strong> {{ last_analysis_refresh }}</p>
+{% else %}
+    <p><strong>Last analysis refresh:</strong> Not yet refreshed</p>
+{% endif %}
 
 <h2 class="mt-4">Analysis</h2>
 <!-- Q1 -->

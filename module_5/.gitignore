@@ -58,3 +58,22 @@ docs/_templates/
 checkpoint.json
 detail_cache*.db
 
+
+# Runtime timestamp files
+last_*.txt
+
+# Temporary test scripts
+test_connection.bat
+test_shell_true.py
+test_subprocess.py
+
+# Windows batch launchers (user-specific)
+START_FLASK_HERE.bat
+run_flask.bat
+
+# Temporary data directory
+module_2_1/
+
+# Temporary output
+output.txt
+app_verification.txt

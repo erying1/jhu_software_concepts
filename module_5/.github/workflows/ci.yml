@@ -42,6 +42,37 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # Step 1: Run Pylint (fail if score < 10)
+      - name: Run Pylint
+        run: |
+          cd module_5
+          pylint src --fail-under=10
+
+      # Step 2: Generate dependency.svg (fail if missing)
+      - name: Install Graphviz
+        run: sudo apt-get update && sudo apt-get install -y graphviz
+
+      - name: Generate dependency graph
+        run: |
+          cd module_5
+          pydeps src/run.py --noshow -T svg -o dependency.svg
+          if [ ! -f dependency.svg ]; then
+            echo "Error: dependency.svg not generated"
+            exit 1
+          fi
+
+      # Step 3: Run Snyk test
+      - name: Run Snyk security scan
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        run: |
+          cd module_5
+          npm install -g snyk
+          snyk auth $SNYK_TOKEN || echo "Snyk auth skipped (token not set)"
+          snyk test --all-projects || echo "Snyk scan completed with findings"
+
+      # Step 4: Run pytest (fail if coverage < 98%)
       - name: Run pytest
         env:
           DB_HOST: localhost
@@ -51,4 +82,4 @@ jobs:
           DB_PASSWORD: postgres
         run: |
           cd module_5
-          pytest --cov=src --cov-report=term-missing
+          pytest --cov=src --cov-report=term-missing --cov-fail-under=98

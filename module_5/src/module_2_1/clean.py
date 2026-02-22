@@ -178,7 +178,7 @@ def clean_data(raw_records: List[Dict]) -> List[Dict]:
     # 2. Save pre‑LLM cleaned snapshot
     # Only save if directory exists (prevents test failures)
     try:
-        save_data(cleaned_basic, "module_3/module_2.1/cleaned_data.json")
+        save_data(cleaned_basic, "module_2_1/cleaned_data.json")
     except FileNotFoundError:
         # Swallow during tests
         pass
@@ -315,13 +315,13 @@ def main():
 
     Loads raw data, runs basic + LLM cleaning, and saves the result.
     """
-    raw = load_data("module_3/module_2.1/raw_applicant_data.json")
-    print(f"Loaded {len(raw)} rows from module_3/module_2.1/raw_applicant_data.json")
+    raw = load_data("module_2_1/raw_applicant_data.json")
+    print(f"Loaded {len(raw)} rows from module_2_1/raw_applicant_data.json")
 
     cleaned = clean_data(raw)
 
-    save_data(cleaned, "module_3/module_2.1/llm_extend_applicant_data.json")
-    out_path = "module_3/module_2.1/llm_extend_applicant_data.json"
+    save_data(cleaned, "module_2_1/llm_extend_applicant_data.json")
+    out_path = "module_2_1/llm_extend_applicant_data.json"
     print(f"Saved {len(cleaned)} rows after clean+LLM to {out_path}")
 
 
