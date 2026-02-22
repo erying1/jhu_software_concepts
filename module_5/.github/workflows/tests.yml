@@ -51,6 +51,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      # 4b. Create .env file for coverage
+      - name: Create .env file for coverage
+        run: |
+          cd module_5
+          cp .env.example .env
+
       # 5. Run Pylint (fail if < 10/10)
       - name: Run Pylint
         run: |

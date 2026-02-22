@@ -118,6 +118,23 @@ def test_ensure_table_exists_creates_table():
 
 
 @pytest.mark.db
+def test_ensure_table_exists_handles_exception():
+    """Test that ensure_table_exists handles exceptions (e.g., permission denied)"""
+    mock_cursor = MagicMock()
+    mock_conn = MagicMock()
+    mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
+
+    # Make cursor.execute raise an exception (e.g., permission denied)
+    mock_cursor.execute.side_effect = Exception("permission denied for schema public")
+
+    # Should not raise - exception is caught and handled
+    ensure_table_exists(mock_conn)
+
+    # Verify conn.rollback was called
+    assert mock_conn.rollback.called
+
+
+@pytest.mark.db
 @patch("src.query_data._real_get_connection")
 @patch("src.query_data.ensure_table_exists")
 def test_get_connection_calls_ensure_table(mock_ensure, mock_real_conn):
