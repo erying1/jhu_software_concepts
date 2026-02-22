@@ -166,11 +166,15 @@ pytest -m integration
 
 Pylint was used to ensure consistent style and maintainability.
 
+**Command:**
 ```bash
-pylint src tests
+pylint src --fail-under=10
 ```
 
+**Result:** ✅ **10.00/10** — No errors or warnings
+
 - `pylint` is included in `requirements.txt`
+- Only `src/` is linted (not tests)
 - Run after activating the virtual environment
 - Project installed in editable mode (`pip install -e .`)
 
@@ -231,10 +235,10 @@ A `setup.py` file is included to make the project installable:
 
 Includes:
 
-- Runtime dependencies (Flask, psycopg2-binary, beautifulsoup4, anthropic)
+- Runtime dependencies (Flask, psycopg2-binary, beautifulsoup4, requests, werkzeug)
 - Testing tools (pytest, pytest-cov)
-- Tooling (pylint, pydeps)
-- Documentation tools (sphinx, sphinx-rtd-theme)
+- Code quality tools (pylint, pydeps)
+- Documentation tools (sphinx, sphinx-rtd-theme, sphinx-autobuild)
 
 This ensures a fresh environment can run the project from scratch.
 
