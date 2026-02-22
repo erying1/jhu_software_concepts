@@ -20,6 +20,8 @@ __pycache__/
 # Coverage reports
 htmlcov/
 .pytest_cache/
+.coverage
+*.coverage
 
 # IDE
 .vscode/
